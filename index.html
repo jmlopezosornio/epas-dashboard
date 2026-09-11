@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EPAS | Tablero de Cobranza</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">ENTE PROVINCIAL DE AGUA Y SANEAMIENTO</div>
+      <h1>Tablero de Cobranza</h1>
+      <p id="periodTitle">Período —</p>
+    </div>
+    <div class="file-actions">
+      <label class="button primary" for="excelFile">Cargar Excel</label>
+      <input id="excelFile" type="file" accept=".xlsx,.xls" hidden />
+      <button id="reloadDefault" class="button secondary">Volver al archivo base</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="status-card">
+      <div><span class="status-dot"></span><strong id="fileStatus">Cargando archivo base…</strong></div>
+      <span id="lastUpdate">—</span>
+    </section>
+
+    <section class="filters panel">
+      <div class="filter-group">
+        <label for="cityFilter">Localidad</label>
+        <select id="cityFilter"><option value="ALL">Todas</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="channelFilter">Agente de cobro</label>
+        <select id="channelFilter"><option value="ALL">Todos</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Período detectado</label>
+        <div class="filter-readonly" id="periodFilter">—</div>
+      </div>
+    </section>
+
+    <section class="kpi-grid">
+      <article class="kpi-card">
+        <span>Cobranza total</span>
+        <strong id="kpiCollected">$ 0</strong>
+        <small>Según filtros aplicados</small>
+      </article>
+      <article class="kpi-card">
+        <span>Principal agente</span>
+        <strong id="kpiTopChannel">—</strong>
+        <small id="kpiTopChannelShare">—</small>
+      </article>
+      <article class="kpi-card">
+        <span>Mayor recaudación</span>
+        <strong id="kpiTopCity">—</strong>
+        <small id="kpiTopCityAmount">—</small>
+      </article>
+      <article class="kpi-card">
+        <span>Localidades</span>
+        <strong id="kpiCities">0</strong>
+        <small>Con cobranza mayor a cero</small>
+      </article>
+    </section>
+
+    <section class="charts-grid">
+      <article class="panel chart-panel wide">
+        <div class="panel-title"><div><h2>Cobranza por localidad</h2><p>Total recaudado según el Excel cargado</p></div></div>
+        <div class="chart-wrap"><canvas id="cityChart"></canvas></div>
+      </article>
+
+      <article class="panel chart-panel">
+        <div class="panel-title"><div><h2>Principales agentes de cobro</h2><p>Participación sobre la cobranza filtrada</p></div></div>
+        <div class="chart-wrap"><canvas id="channelChart"></canvas></div>
+      </article>
+
+      <article class="panel chart-panel">
+        <div class="panel-title"><div><h2>Distribución por localidad</h2><p>Participación de cada ciudad en el total</p></div></div>
+        <div class="chart-wrap"><canvas id="cityShareChart"></canvas></div>
+      </article>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="panel-title">
+        <div><h2>Detalle de cobranza</h2><p>Agente de cobro × localidad</p></div>
+        <div class="table-total" id="tableTotal">Total: $ 0</div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Agente de cobro</th><th>Localidad</th><th class="numeric">Importe</th><th class="numeric">Participación</th></tr></thead>
+          <tbody id="detailBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel info-panel">
+      <h2>Prueba inicial con el formato actual</h2>
+      <p>Esta versión lee directamente la matriz del Excel: identifica la columna <strong>Agente de cobro</strong>, toma como localidades todas las columnas comprendidas antes de <strong>Total General</strong> y excluye las filas de totales. No hace falta modificar este archivo para probar el tablero.</p>
+    </section>
+  </main>
+
+  <footer>EPAS · Tablero de gestión comercial</footer>
+  <script src="app.js"></script>
+</body>
+</html>
