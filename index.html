@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b2942" />
+  <title>EPAS | Tablero de Gestión</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    .subtabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}
+    .subtab-button{border:1px solid #d8e1e8;background:#fff;color:#38536a;border-radius:999px;padding:9px 16px;font-weight:700;cursor:pointer}
+    .subtab-button.active{background:#0b2942;color:#fff;border-color:#0b2942}
+    .contract-view{display:none}.contract-view.active{display:block}
+    .contracts-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.75fr);gap:18px;margin-bottom:18px}
+    .contracts-table{min-width:1450px}.process-table{min-width:1150px}
+    .contracts-table td,.contracts-table th,.process-table td,.process-table th{vertical-align:top}
+    .contract-name{font-weight:700;min-width:235px}.company-cell{font-weight:700}.exp-cell{min-width:220px}
+    .status-pill.vigente{background:#e7f7ee;color:#167744}.status-pill.proximo{background:#fff5d8;color:#8a6400}.status-pill.critico{background:#ffe7df;color:#b64120}.status-pill.vencido{background:#fde8e8;color:#a42929}.status-pill.renovacion{background:#e8efff;color:#315fc2}.status-pill.sin-fecha{background:#edf1f4;color:#5c6b76}
+    .renewal-text{display:block;margin-top:6px;font-size:12px;color:#516575;max-width:250px}
+    .contract-note{font-size:12px;color:#516575;white-space:normal;min-width:180px}
+    .mini-summary{display:grid;gap:10px}.mini-summary .status-row{min-height:44px}
+    @media (max-width:980px){.contracts-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-block">
+      <div class="eyebrow">ENTE PROVINCIAL DE AGUA Y SANEAMIENTO</div>
+      <h1>Tablero de Gestión</h1>
+      <p id="headerSubtitle">Seguimiento comercial, obras y contratos</p>
+    </div>
+  </header>
+
+  <nav class="tabbar" aria-label="Secciones del tablero">
+    <button class="tab-button active" data-tab="cobranza">Facturación y Cobranza</button>
+    <button class="tab-button" data-tab="obras">Obras a licitar <span id="worksBadge" class="badge">0</span></button>
+    <button class="tab-button" data-tab="contratos">Contratos y Servicios <span id="contractsBadge" class="badge">0</span></button>
+  </nav>
+
+  <main class="container">
+    <section id="tab-cobranza" class="tab-content active">
+      <div class="section-heading"><div><div class="section-kicker">GESTIÓN COMERCIAL</div><h2>Tablero de Cobranza</h2><p id="periodTitle">Período —</p></div><div class="file-actions"><button id="reloadDefault" class="button secondary">Actualizar datos</button></div></div>
+      <section class="status-card"><div><span class="status-dot"></span><strong id="fileStatus">Cargando archivo base…</strong></div><span id="lastUpdate">—</span></section>
+      <section class="filters panel"><div class="filter-group"><label for="cityFilter">Localidad</label><select id="cityFilter"><option value="ALL">Todas</option></select></div><div class="filter-group"><label for="channelFilter">Agente de cobro</label><select id="channelFilter"><option value="ALL">Todos</option></select></div><div class="filter-group"><label>Período detectado</label><div class="filter-readonly" id="periodFilter">—</div></div></section>
+      <section class="kpi-grid"><article class="kpi-card"><span>Cobranza total</span><strong id="kpiCollected">$ 0</strong><small>Según filtros aplicados</small></article><article class="kpi-card"><span>Principal agente</span><strong id="kpiTopChannel">—</strong><small id="kpiTopChannelShare">—</small></article><article class="kpi-card"><span>Mayor recaudación</span><strong id="kpiTopCity">—</strong><small id="kpiTopCityAmount">—</small></article><article class="kpi-card"><span>Localidades</span><strong id="kpiCities">0</strong><small>Con cobranza mayor a cero</small></article></section>
+      <section class="charts-grid"><article class="panel chart-panel wide"><div class="panel-title"><div><h3>Cobranza por localidad</h3><p>Total recaudado según el Excel cargado</p></div></div><div class="chart-wrap"><canvas id="cityChart"></canvas></div></article><article class="panel chart-panel"><div class="panel-title"><div><h3>Principales agentes de cobro</h3><p>Participación sobre la cobranza filtrada</p></div></div><div class="chart-wrap"><canvas id="channelChart"></canvas></div></article><article class="panel chart-panel"><div class="panel-title"><div><h3>Distribución por localidad</h3><p>Participación de cada ciudad en el total</p></div></div><div class="chart-wrap"><canvas id="cityShareChart"></canvas></div></article></section>
+      <section class="panel table-panel"><div class="panel-title"><div><h3>Detalle de cobranza</h3><p>Agente de cobro × localidad</p></div><div class="table-total" id="tableTotal">Total: $ 0</div></div><div class="table-scroll"><table><thead><tr><th>Agente de cobro</th><th>Localidad</th><th class="numeric">Importe</th><th class="numeric">Participación</th></tr></thead><tbody id="detailBody"></tbody></table></div></section>
+    </section>
+
+    <section id="tab-obras" class="tab-content">
+      <div class="section-heading"><div><div class="section-kicker">SEGUIMIENTO GDE</div><h2>Obras a licitar</h2><p>Seguimiento de solicitudes, aperturas y adjudicaciones</p></div><div class="file-actions"><button id="reloadWorksDefault" class="button secondary">Actualizar datos</button></div></div>
+      <section class="status-card"><div><span class="status-dot works-dot"></span><strong id="worksFileStatus">Cargando archivo de obras…</strong></div><span id="worksLastUpdate">—</span></section>
+      <section class="filters panel works-filters"><div class="filter-group"><label for="worksCityFilter">Localidad</label><select id="worksCityFilter"><option value="ALL">Todas</option></select></div><div class="filter-group"><label for="worksStatusFilter">Estado</label><select id="worksStatusFilter"><option value="ALL">Todos</option><option value="ADJUDICADA">Adjudicada</option><option value="VENCIDA">Apertura vencida</option><option value="PROXIMA">Apertura próxima</option><option value="PROGRAMADA">Apertura programada</option><option value="SIN_FECHA">Sin fecha definida</option></select></div><div class="filter-group grow"><label for="worksSearch">Buscar</label><input id="worksSearch" class="text-input" type="search" placeholder="Expediente u obra…" /></div></section>
+      <section class="kpi-grid works-kpis"><article class="kpi-card"><span>Obras registradas</span><strong id="kpiWorks">0</strong><small>Según filtros aplicados</small></article><article class="kpi-card"><span>Presupuesto oficial</span><strong id="kpiBudget">$ 0</strong><small>Total de obras filtradas</small></article><article class="kpi-card"><span>Con apertura</span><strong id="kpiOpenings">0</strong><small id="kpiNextOpening">Próxima: —</small></article><article class="kpi-card"><span>Adjudicadas</span><strong id="kpiAwarded">0</strong><small id="kpiAwardedShare">0 % del total</small></article></section>
+      <section class="works-summary-grid"><article class="panel"><div class="panel-title"><div><h3>Estado de las obras</h3><p>Clasificación automática según fecha de apertura y adjudicación</p></div></div><div id="worksStatusCards" class="status-summary"></div></article><article class="panel"><div class="panel-title"><div><h3>Presupuesto por localidad</h3><p>Participación del presupuesto oficial</p></div></div><div class="chart-wrap works-chart"><canvas id="worksCityChart"></canvas></div></article></section>
+      <section class="panel table-panel"><div class="panel-title"><div><h3>Seguimiento de expedientes</h3><p>Información leída directamente del Excel</p></div><div class="table-total" id="worksTableTotal">0 obras</div></div><div class="table-scroll"><table class="works-table"><thead><tr><th>Expediente</th><th>Obra</th><th>Localidad</th><th>Apertura</th><th class="numeric">Presupuesto oficial</th><th>Estado</th><th>Adjudicado</th></tr></thead><tbody id="worksBody"></tbody></table></div></section>
+    </section>
+
+    <section id="tab-contratos" class="tab-content">
+      <div class="section-heading"><div><div class="section-kicker">GESTIÓN DE SERVICIOS</div><h2>Contratos de cuadrillas y servicios</h2><p>Seguimiento de contratos vigentes, vencimientos y nuevas tramitaciones</p></div><div class="file-actions"><button id="reloadContractsDefault" class="button secondary">Actualizar datos</button></div></div>
+      <section class="status-card"><div><span class="status-dot"></span><strong id="contractsFileStatus">Cargando archivo de contratos…</strong></div><span id="contractsLastUpdate">—</span></section>
+
+      <div class="subtabs" aria-label="Vistas de contratos">
+        <button class="subtab-button active" data-contract-view="vigentes">Vigentes <span id="activeContractsCount"></span></button>
+        <button class="subtab-button" data-contract-view="proceso">En proceso <span id="processContractsCount"></span></button>
+      </div>
+
+      <div id="contract-view-vigentes" class="contract-view active">
+        <section class="filters panel works-filters"><div class="filter-group"><label for="contractCityFilter">Localidad</label><select id="contractCityFilter"><option value="ALL">Todas</option></select></div><div class="filter-group"><label for="contractStatusFilter">Estado</label><select id="contractStatusFilter"><option value="ALL">Todos</option><option value="VIGENTE">Vigente</option><option value="PROXIMO">Próximo a vencer</option><option value="CRITICO">Vencimiento crítico</option><option value="RENOVACION">En renovación</option><option value="VENCIDO">Vencido</option><option value="SIN_FECHA">Sin fecha</option></select></div><div class="filter-group grow"><label for="contractSearch">Buscar</label><input id="contractSearch" class="text-input" type="search" placeholder="Contrato, empresa o expediente…" /></div></section>
+
+        <section class="kpi-grid"><article class="kpi-card"><span>Contratos registrados</span><strong id="kpiContracts">0</strong><small>Según filtros aplicados</small></article><article class="kpi-card"><span>Monto adjudicado</span><strong id="kpiContractsAmount">$ 0</strong><small>Total adjudicado filtrado</small></article><article class="kpi-card"><span>Próximos / críticos</span><strong id="kpiContractsExpiring">0</strong><small id="kpiNextContractEnd">Próximo vencimiento: —</small></article><article class="kpi-card"><span>En renovación</span><strong id="kpiContractsRenewal">0</strong><small>Con nueva tramitación iniciada</small></article></section>
+
+        <section class="contracts-grid"><article class="panel"><div class="panel-title"><div><h3>Estado de contratos</h3><p>Vencimientos calculados sobre la fecha final efectiva</p></div></div><div id="contractStatusCards" class="status-summary mini-summary"></div></article><article class="panel"><div class="panel-title"><div><h3>Monto adjudicado por empresa</h3><p>Acumulado de los contratos filtrados</p></div></div><div class="chart-wrap works-chart"><canvas id="contractsCompanyChart"></canvas></div></article></section>
+
+        <section class="panel table-panel"><div class="panel-title"><div><h3>Detalle de contratos</h3><p>Incluye prórrogas, ampliaciones y nuevas tramitaciones detectadas en el Excel</p></div><div class="table-total" id="contractsTableTotal">0 contratos</div></div><div class="table-scroll"><table class="contracts-table"><thead><tr><th>Localidad</th><th>Contrato / Servicio</th><th>Empresa</th><th>Expediente</th><th>Resolución</th><th class="numeric">Adjudicado</th><th>Inicio</th><th>Final efectiva</th><th>Estado</th><th>Personal</th><th>Vehículos</th><th>Provisiones</th><th>Nueva tramitación</th></tr></thead><tbody id="contractsBody"></tbody></table></div></section>
+      </div>
+
+      <div id="contract-view-proceso" class="contract-view">
+        <section class="filters panel works-filters"><div class="filter-group"><label for="processCityFilter">Localidad</label><select id="processCityFilter"><option value="ALL">Todas</option></select></div><div class="filter-group grow"><label for="processSearch">Buscar</label><input id="processSearch" class="text-input" type="search" placeholder="Contrato o expediente…" /></div></section>
+        <section class="kpi-grid"><article class="kpi-card"><span>Tramitaciones</span><strong id="kpiProcess">0</strong><small>Expedientes en proceso</small></article><article class="kpi-card"><span>Personal previsto</span><strong id="kpiProcessStaff">0</strong><small>Dato estimado desde el Excel</small></article><article class="kpi-card"><span>Vehículos previstos</span><strong id="kpiProcessVehicles">0</strong><small>Según requerimientos registrados</small></article><article class="kpi-card"><span>Localidades</span><strong id="kpiProcessCities">0</strong><small>Con nuevas tramitaciones</small></article></section>
+        <section class="panel table-panel"><div class="panel-title"><div><h3>Contratos en proceso</h3><p>Nuevas contrataciones y renovaciones en trámite</p></div><div class="table-total" id="processTableTotal">0 trámites</div></div><div class="table-scroll"><table class="process-table"><thead><tr><th>Localidad</th><th>Contrato / Servicio</th><th>Expediente</th><th class="numeric">Presupuesto oficial</th><th class="numeric">Adjudicado</th><th>Empresa</th><th>Plazo</th><th>Personal</th><th>Vehículos</th><th>Inicio</th><th>Final</th></tr></thead><tbody id="processBody"></tbody></table></div></section>
+      </div>
+    </section>
+  </main>
+
+  <footer>EPAS · Tablero de gestión</footer>
+  <script src="app.js"></script>
+</body>
+</html>
