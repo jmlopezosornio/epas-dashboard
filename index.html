@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b2942" />
+  <title>EPAS | Tablero de Gestión</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    .subtabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}
+    .subtab-button{border:1px solid #d8e1e8;background:#fff;color:#38536a;border-radius:999px;padding:9px 16px;font-weight:700;cursor:pointer}
+    .subtab-button.active{background:#0b2942;color:#fff;border-color:#0b2942}
+    .contract-view{display:none}.contract-view.active{display:block}
+    .contracts-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.75fr);gap:18px;margin-bottom:18px}
+    .contracts-table{min-width:1450px}.process-table{min-width:1150px}
+    .contracts-table td,.contracts-table th,.process-table td,.process-table th{vertical-align:top}
+    .contract-name{font-weight:700;min-width:235px}.company-cell{font-weight:700}.exp-cell{min-width:220px}
+    .status-pill.vigente{background:#e7f7ee;color:#167744}.status-pill.proximo{background:#fff5d8;color:#8a6400}.status-pill.critico{background:#ffe7df;color:#b64120}.status-pill.vencido{background:#fde8e8;color:#a42929}.status-pill.renovacion{background:#e8efff;color:#315fc2}.status-pill.sin-fecha{background:#edf1f4;color:#5c6b76}
+    .renewal-text{display:block;margin-top:6px;font-size:12px;color:#516575;max-width:250px}
+    .contract-note{font-size:12px;color:#516575;white-space:normal;min-width:180px}
+    .mini-summary{display:grid;gap:10px}.mini-summary .status-row{min-height:44px}
+    @media (max-width:980px){.contracts-grid{grid-template-columns:1fr}}
+
+    /* Mapa de obras */
+    .works-map-panel{margin:18px 0}
+    .works-map-layout{
+      display:grid;
+      grid-template-columns:minmax(190px,235px) minmax(0,1fr);
+      gap:18px;
+      align-items:stretch;
+    }
+    .works-map-locations{
+      border:1px solid #d8e1e8;
+      border-radius:14px;
+      background:#f7f9fb;
+      padding:14px 12px;
+      min-height:390px;
+      max-height:390px;
+      overflow:auto;
+    }
+    .works-map-locations h4{
+      margin:0 0 10px;
+      color:#0b2942;
+      font-size:13px;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .works-location-list{display:grid;gap:7px}
+    .works-location-item{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border:0;
+      background:#fff;
+      color:#314d63;
+      border-radius:10px;
+      padding:8px 9px;
+      font:inherit;
+      cursor:pointer;
+      text-align:left;
+      box-shadow:0 1px 2px rgba(11,41,66,.05);
+    }
+    .works-location-item:hover{background:#eef4f8;color:#0b2942}
+    .works-location-name{font-size:12px;font-weight:700;line-height:1.2}
+    .works-location-count{
+      flex:0 0 auto;
+      min-width:25px;
+      height:25px;
+      padding:0 7px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:999px;
+      background:#0b2942;
+      color:#fff;
+      font-size:11px;
+      font-weight:800;
+    }
+    .works-map-empty{font-size:12px;color:#607485;line-height:1.4}
+    .works-map-stage{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-width:0;
+      border-radius:16px;
+      background:#f7f9fb;
+    }
+    .works-map-wrap{
+      width:min(100%,660px);
+      height:390px;
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid #d8e1e8;
+      background:#eef3f6;
+    }
+    #worksMap{width:100%;height:100%}
+    .works-map-note{font-size:12px;color:#607485;margin-top:8px}
+    .works-map-marker{background:#0b2942;color:#fff;border:3px solid #fff;border-radius:999px;min-width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;box-shadow:0 3px 10px rgba(11,41,66,.28);padding:0 8px}
+    .works-map-popup h4{margin:0 0 8px;font-size:15px;color:#0b2942}
+    .works-map-popup ul{margin:0;padding-left:18px;max-height:180px;overflow:auto}
+    .works-map-popup li{margin:0 0 5px;line-height:1.25}
+    .works-map-popup small{display:block;color:#607485;margin-top:8px}
+    @media (max-width:820px){
+      .works-map-layout{grid-template-columns:1fr}
+      .works-map-locations{min-height:auto;max-height:180px}
+      .works-map-wrap{width:100%;height:380px}
+    }
+    @media (max-width:700px){.works-map-wrap{height:350px}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-block">
+      <div class="eyebrow">ENTE PROVINCIAL DE AGUA Y SANEAMIENTO</div>
+      <h1>Tablero de Gestión</h1>
+      <p id="headerSubtitle">Seguimiento comercial, obras y contratos</p>
+    </div>
+  </header>
+
+  <nav class="tabbar" aria-label="Secciones del tablero">
+    <button class="tab-button active" data-tab="cobranza">Facturación y Cobranza</button>
+    <button class="tab-button" data-tab="obras">Obras a licitar <span id="worksBadge" class="badge">0</span></button>
+    <button class="tab-button" data-tab="contratos">Contratos y Servicios <span id="contractsBadge" class="badge">0</span></button>
+  </nav>
+
+  <main class="container">
+    <section id="tab-cobranza" class="tab-content active">
+      <div class="section-heading"><div><div class="section-kicker">GESTIÓN COMERCIAL</div><h2>Tablero de Cobranza</h2><p id="periodTitle">Período —</p></div><div class="file-actions"><button id="reloadDefault" class="button secondary">Actualizar datos</button></div></div>
+      <section class="status-card"><div><span class="status-dot"></span><strong id="fileStatus">Cargando archivo base…</strong></div><span id="lastUpdate">—</span></section>
+      <section class="filters panel"><div class="filter-group"><label for="cityFilter">Localidad</label><select id="cityFilter"><option value="ALL">Todas</option></select></div><div class="filter-group"><label for="channelFilter">Agente de cobro</label><select id="channelFilter"><option value="ALL">Todos</option></select></div><div class="filter-group"><label>Período detectado</label><div class="filter-readonly" id="periodFilter">—</div></div></section>
+      <section class="kpi-grid"><article class="kpi-card"><span>Cobranza total</span><strong id="kpiCollected">$ 0</strong><small>Según filtros aplicados</small></article><article class="kpi-card"><span>Principal agente</span><strong id="kpiTopChannel">—</strong><small id="kpiTopChannelShare">—</small></article><article class="kpi-card"><span>Mayor recaudación</span><strong id="kpiTopCity">—</strong><small id="kpiTopCityAmount">—</small></article><article class="kpi-card"><span>Localidades</span><strong id="kpiCities">0</strong><small>Con cobranza mayor a cero</small></article></section>
+      <section class="charts-grid"><article class="panel chart-panel wide"><div class="panel-title"><div><h3>Cobranza por localidad</h3></div></div><div class="chart-wrap"><canvas id="cityChart"></canvas></div></article><article class="panel chart-panel"><div class="panel-title"><div><h3>Principales agentes de cobro</h3></div></div><div class="chart-wrap"><canvas id="channelChart"></canvas></div></article><article class="panel chart-panel"><div class="panel-title"><div><h3>Distribución por localidad</h3></div></div><div class="chart-wrap"><canvas id="cityShareChart"></canvas></div></article></section>
+      <section class="panel table-panel"><div class="panel-title"><div><h3>Detalle de cobranza</h3></div><div class="table-total" id="tableTotal">Total: $ 0</div></div><div class="table-scroll"><table><thead><tr><th>Agente de cobro</th><th>Localidad</th><th class="numeric">Importe</th><th class="numeric">Participación</th></tr></thead><tbody id="detailBody"></tbody></table></div></section>
+    </section>
+
+    <section id="tab-obras" class="tab-content">
+      <div class="section-heading"><div><div class="section-kicker">SEGUIMIENTO GDE</div><h2>Obras a licitar</h2><p>Seguimiento de solicitudes, aperturas y adjudicaciones</p></div><div class="file-actions"><button id="reloadWorksDefault" class="button secondary">Actualizar datos</button></div></div>
+      <section class="status-card"><div><span class="status-dot works-dot"></span><strong id="worksFileStatus">Cargando archivo de obras…</strong></div><span id="worksLastUpdate">—</span></section>
+      <section class="filters panel works-filters"><div class="filter-group"><label for="worksCityFilter">Localidad</label><select id="worksCityFilter"><option value="ALL">Todas</option></select></div><div class="filter-group"><label for="worksStatusFilter">Estado</label><select id="worksStatusFilter"><option value="ALL">Todos</option><option value="ADJUDICADA">Adjudicada</option><option value="VENCIDA">Apertura vencida</option><option value="PROXIMA">Apertura próxima</option><option value="PROGRAMADA">Apertura programada</option><option value="SIN_FECHA">Sin fecha definida</option></select></div><div class="filter-group grow"><label for="worksSearch">Buscar</label><input id="worksSearch" class="text-input" type="search" placeholder="Expediente u obra…" /></div></section>
+      <section class="kpi-grid works-kpis"><article class="kpi-card"><span>Obras registradas</span><strong id="kpiWorks">0</strong><small>Según filtros aplicados</small></article><article class="kpi-card"><span>Presupuesto oficial</span><strong id="kpiBudget">$ 0</strong><small>Total de obras filtradas</small></article><article class="kpi-card"><span>Con apertura</span><strong id="kpiOpenings">0</strong><small id="kpiNextOpening">Próxima: —</small></article><article class="kpi-card"><span>Adjudicadas</span><strong id="kpiAwarded">0</strong><small id="kpiAwardedShare">0 % del total</small></article></section>
+
+      <section class="panel works-map-panel">
+        <div class="panel-title"><div><h3>Distribución territorial de obras</h3></div><div class="table-total" id="worksMapTotal">0 localidades</div></div>
+        <div class="works-map-layout">
+          <aside class="works-map-locations">
+            <h4>Localidades con obras</h4>
+            <div id="worksLocationsList" class="works-location-list">
+              <div class="works-map-empty">Cargando localidades…</div>
+            </div>
+          </aside>
+          <div class="works-map-stage">
+            <div class="works-map-wrap">
+              <div id="worksMap" aria-label="Mapa de obras de EPAS en la Provincia del Neuquén"></div>
+            </div>
+          </div>
+        </div>
+        <div class="works-map-note">El número indica la cantidad de obras visibles en cada localidad. También podés seleccionar una localidad desde la lista.</div>
+      </section>
+
+      <section class="works-summary-grid"><article class="panel"><div class="panel-title"><div><h3>Estado de las obras</h3></div></div><div id="worksStatusCards" class="status-summary"></div></article><article class="panel"><div class="panel-title"><div><h3>Presupuesto por localidad</h3></div></div><div class="chart-wrap works-chart"><canvas id="worksCityChart"></canvas></div></article></section>
+      <section class="panel table-panel"><div class="panel-title"><div><h3>Seguimiento de expedientes</h3></div><div class="table-total" id="worksTableTotal">0 obras</div></div><div class="table-scroll"><table class="works-table"><thead><tr><th>Expediente</th><th>Obra</th><th>Localidad</th><th>Apertura</th><th class="numeric">Presupuesto oficial</th><th>Estado</th><th>Adjudicado</th></tr></thead><tbody id="worksBody"></tbody></table></div></section>
+    </section>
+
+    <section id="tab-contratos" class="tab-content">
+      <div class="section-heading"><div><div class="section-kicker">GESTIÓN DE SERVICIOS</div><h2>Contratos de cuadrillas y servicios</h2><p>Seguimiento de contratos vigentes, vencimientos y nuevas tramitaciones</p></div><div class="file-actions"><button id="reloadContractsDefault" class="button secondary">Actualizar datos</button></div></div>
+      <section class="status-card"><div><span class="status-dot"></span><strong id="contractsFileStatus">Cargando archivo de contratos…</strong></div><span id="contractsLastUpdate">—</span></section>
+
+      <div class="subtabs" aria-label="Vistas de contratos">
+        <button class="subtab-button active" data-contract-view="vigentes">Vigentes <span id="activeContractsCount"></span></button>
+        <button class="subtab-button" data-contract-view="proceso">En proceso <span id="processContractsCount"></span></button>
+      </div>
+
+      <div id="contract-view-vigentes" class="contract-view active">
+        <section class="filters panel works-filters"><div class="filter-group"><label for="contractCityFilter">Localidad</label><select id="contractCityFilter"><option value="ALL">Todas</option></select></div><div class="filter-group"><label for="contractStatusFilter">Estado</label><select id="contractStatusFilter"><option value="ALL">Todos</option><option value="VIGENTE">Vigente</option><option value="PROXIMO">Próximo a vencer</option><option value="CRITICO">Vencimiento crítico</option><option value="RENOVACION">En renovación</option><option value="VENCIDO">Vencido</option><option value="SIN_FECHA">Sin fecha</option></select></div><div class="filter-group grow"><label for="contractSearch">Buscar</label><input id="contractSearch" class="text-input" type="search" placeholder="Contrato, empresa o expediente…" /></div></section>
+
+        <section class="kpi-grid"><article class="kpi-card"><span>Contratos registrados</span><strong id="kpiContracts">0</strong><small>Según filtros aplicados</small></article><article class="kpi-card"><span>Monto adjudicado</span><strong id="kpiContractsAmount">$ 0</strong><small>Total adjudicado filtrado</small></article><article class="kpi-card"><span>Próximos / críticos</span><strong id="kpiContractsExpiring">0</strong><small id="kpiNextContractEnd">Próximo vencimiento: —</small></article><article class="kpi-card"><span>En renovación</span><strong id="kpiContractsRenewal">0</strong><small>Con nueva tramitación iniciada</small></article></section>
+
+        <section class="contracts-grid"><article class="panel"><div class="panel-title"><div><h3>Estado de contratos</h3></div></div><div id="contractStatusCards" class="status-summary mini-summary"></div></article><article class="panel"><div class="panel-title"><div><h3>Monto adjudicado por empresa</h3></div></div><div class="chart-wrap works-chart"><canvas id="contractsCompanyChart"></canvas></div></article></section>
+
+        <section class="panel table-panel"><div class="panel-title"><div><h3>Detalle de contratos</h3></div><div class="table-total" id="contractsTableTotal">0 contratos</div></div><div class="table-scroll"><table class="contracts-table"><thead><tr><th>Localidad</th><th>Contrato / Servicio</th><th>Expediente</th><th class="numeric">Adjudicado</th><th>Empresa</th><th>Plazo</th><th>Inicio</th><th>Final efectiva</th><th>Días para renovación</th><th>Estado</th><th>Nueva tramitación</th></tr></thead><tbody id="contractsBody"></tbody></table></div></section>
+      </div>
+
+      <div id="contract-view-proceso" class="contract-view">
+        <section class="filters panel works-filters"><div class="filter-group"><label for="processCityFilter">Localidad</label><select id="processCityFilter"><option value="ALL">Todas</option></select></div><div class="filter-group grow"><label for="processSearch">Buscar</label><input id="processSearch" class="text-input" type="search" placeholder="Contrato o expediente…" /></div></section>
+        <section class="kpi-grid"><article class="kpi-card"><span>Tramitaciones</span><strong id="kpiProcess">0</strong><small>Expedientes en proceso</small></article><article class="kpi-card"><span>Presupuesto oficial</span><strong id="kpiProcessBudget">$ 0</strong><small>Total registrado</small></article><article class="kpi-card"><span>Monto adjudicado</span><strong id="kpiProcessAwarded">$ 0</strong><small>Total adjudicado registrado</small></article><article class="kpi-card"><span>Localidades</span><strong id="kpiProcessCities">0</strong><small>Con nuevas tramitaciones</small></article></section>
+        <section class="panel table-panel"><div class="panel-title"><div><h3>Contratos en proceso</h3></div><div class="table-total" id="processTableTotal">0 trámites</div></div><div class="table-scroll"><table class="process-table"><thead><tr><th>Localidad</th><th>Contrato / Servicio</th><th>Expediente</th><th class="numeric">Presupuesto oficial</th><th class="numeric">Adjudicado</th><th>Empresa</th><th>Plazo</th><th>Inicio</th><th>Final</th></tr></thead><tbody id="processBody"></tbody></table></div></section>
+      </div>
+    </section>
+  </main>
+
+  <footer>EPAS · Tablero de gestión</footer>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+  <script>
+    (() => {
+      const LOCALIDADES = {
+        "NEUQUEN": [-38.9516, -68.0591],
+        "CENTENARIO": [-38.8295, -68.1318],
+        "PLOTTIER": [-38.9667, -68.2333],
+        "SENILLOSA": [-39.0140, -68.4328],
+        "VILLA EL CHOCON": [-39.2636, -68.7842],
+        "CUTRAL CO": [-38.9361, -69.2305],
+        "PLAZA HUINCUL": [-38.9250, -69.2083],
+        "ZAPALA": [-38.8992, -70.0544],
+        "MARIANO MORENO": [-38.7507, -70.0230],
+        "LAS LAJAS": [-38.5234, -70.3674],
+        "BAJADA DEL AGRIO": [-38.4074, -70.0324],
+        "ALUMINE": [-39.2369, -70.9197],
+        "VILLA PEHUENIA": [-38.8840, -71.1730],
+        "MOQUEHUE": [-38.9480, -71.3500],
+        "JUNIN DE LOS ANDES": [-39.9504, -71.0694],
+        "SAN MARTIN DE LOS ANDES": [-40.1572, -71.3524],
+        "VILLA LA ANGOSTURA": [-40.7618, -71.6463],
+        "VILLA TRAFUL": [-40.6550, -71.4078],
+        "PIEDRA DEL AGUILA": [-40.0484, -70.0741],
+        "PICUN LEUFU": [-39.5238, -69.2797],
+        "EL HUECU": [-37.6466, -70.5809],
+        "EL CHOLAR": [-37.4428, -70.6436],
+        "LONCOPUE": [-38.0728, -70.6164],
+        "CAVIAHUE": [-37.8710, -71.0547],
+        "COPAHUE": [-37.8184, -71.1019],
+        "CHOS MALAL": [-37.3781, -70.2709],
+        "ANDACOLLO": [-37.1796, -70.6691],
+        "HUINGAN CO": [-37.1608, -70.6240],
+        "LAS OVEJAS": [-36.9895, -70.7498],
+        "VARVARCO": [-36.8568, -70.6806],
+        "MANZANO AMARGO": [-36.7545, -70.7630],
+        "TRICAO MALAL": [-37.0455, -70.3350],
+        "BUTA RANQUIL": [-37.0522, -69.8775],
+        "BARRANCAS": [-36.8203, -69.9142],
+        "RINCON DE LOS SAUCES": [-37.3906, -68.9252],
+        "ANELO": [-38.3546, -68.7884],
+        "SAN PATRICIO DEL CHANAR": [-38.6250, -68.2981],
+        "VISTA ALEGRE": [-38.7506, -68.1739],
+        "SAUZAL BONITO": [-38.5969, -69.0803],
+        "PASO AGUERRE": [-39.3372, -69.8350],
+        "RAMON CASTRO": [-38.8530, -69.7660],
+        "VILLA DEL NAHUEVE": [-37.0852, -70.7700],
+        "LOS MICHES": [-37.2105, -70.8228],
+        "QUILI MALAL": [-38.3126, -69.8156],
+        "TAQUIMILAN": [-37.5194, -70.2517],
+        "VILLA CURI LEUVU": [-37.6867, -70.3217]
+      };
+
+      const normalize = value => String(value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toUpperCase()
+        .replace(/\./g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      const aliases = {
+        "NEUQUEN CAPITAL": "NEUQUEN",
+        "CAPITAL": "NEUQUEN",
+        "SAN MARTIN": "SAN MARTIN DE LOS ANDES",
+        "S M DE LOS ANDES": "SAN MARTIN DE LOS ANDES",
+        "V LA ANGOSTURA": "VILLA LA ANGOSTURA",
+        "P HUINCUL": "PLAZA HUINCUL",
+        "CUTRAL-CO": "CUTRAL CO",
+        "HUINGAN-CO": "HUINGAN CO"
+      };
+
+      let map;
+      let markerLayer;
+      let observer;
+      let refreshTimer;
+      const markersByKey = new Map();
+
+      function getCoords(rawName){
+        let key = normalize(rawName);
+        key = aliases[key] || key;
+        return LOCALIDADES[key] || null;
+      }
+
+      function canonicalKey(rawName){
+        let key = normalize(rawName);
+        return aliases[key] || key;
+      }
+
+      function initMap(){
+        const el = document.getElementById("worksMap");
+        if (!el || typeof L === "undefined") return;
+        map = L.map(el, { zoomControl:true, scrollWheelZoom:false }).setView([-38.75, -69.75], 5.7);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 18,
+          attribution: "&copy; OpenStreetMap"
+        }).addTo(map);
+        markerLayer = L.layerGroup().addTo(map);
+        setTimeout(() => map.invalidateSize(), 250);
+      }
+
+      function readVisibleWorks(){
+        const tbody = document.getElementById("worksBody");
+        if (!tbody) return [];
+        return [...tbody.querySelectorAll("tr")].map(tr => {
+          const cells = tr.querySelectorAll("td");
+          if (cells.length < 3) return null;
+          const expediente = cells[0]?.textContent.trim() || "";
+          const obra = cells[1]?.textContent.trim() || "";
+          const localidad = cells[2]?.textContent.trim() || "";
+          if (!localidad || !obra) return null;
+          return { expediente, obra, localidad };
+        }).filter(Boolean);
+      }
+
+      function renderLocationList(grouped){
+        const list = document.getElementById("worksLocationsList");
+        if (!list) return;
+
+        const groups = [...grouped.entries()]
+          .map(([key, group]) => ({ key, ...group }))
+          .sort((a,b) => a.localidad.localeCompare(b.localidad, "es"));
+
+        if (!groups.length){
+          list.innerHTML = '<div class="works-map-empty">No hay localidades para los filtros seleccionados.</div>';
+          return;
+        }
+
+        list.innerHTML = groups.map(group => `
+          <button class="works-location-item" type="button" data-map-locality="${escapeHtml(group.key)}" title="Ver ${escapeHtml(group.localidad)} en el mapa">
+            <span class="works-location-name">${escapeHtml(group.localidad)}</span>
+            <span class="works-location-count">${group.items.length}</span>
+          </button>
+        `).join("");
+
+        list.querySelectorAll("[data-map-locality]").forEach(button => {
+          button.addEventListener("click", () => {
+            const key = button.dataset.mapLocality;
+            const data = markersByKey.get(key);
+            if (!data || !map) return;
+            map.flyTo(data.coords, Math.max(map.getZoom(), 8), { duration:.45 });
+            setTimeout(() => data.marker.openPopup(), 480);
+          });
+        });
+      }
+
+      function refreshMap(){
+        if (!map || !markerLayer) return;
+        markerLayer.clearLayers();
+        markersByKey.clear();
+
+        const works = readVisibleWorks();
+        const grouped = new Map();
+
+        works.forEach(item => {
+          const coords = getCoords(item.localidad);
+          if (!coords) return;
+          const key = canonicalKey(item.localidad);
+          if (!grouped.has(key)) grouped.set(key, { localidad:item.localidad, coords, items:[] });
+          grouped.get(key).items.push(item);
+        });
+
+        const bounds = [];
+        grouped.forEach((group, key) => {
+          const count = group.items.length;
+          const icon = L.divIcon({
+            className: "",
+            html: `<div class="works-map-marker" title="${escapeHtml(group.localidad)}: ${count} obra${count === 1 ? "" : "s"}">${count}</div>`,
+            iconSize: [42, 42],
+            iconAnchor: [21, 21]
+          });
+
+          const itemsHtml = group.items.slice(0, 12).map(item =>
+            `<li><strong>${escapeHtml(item.obra)}</strong>${item.expediente ? `<br><small>${escapeHtml(item.expediente)}</small>` : ""}</li>`
+          ).join("");
+
+          const more = count > 12 ? `<small>+ ${count - 12} obra${count - 12 === 1 ? "" : "s"} más</small>` : "";
+          const popup = `<div class="works-map-popup"><h4>${escapeHtml(group.localidad)} · ${count} obra${count === 1 ? "" : "s"}</h4><ul>${itemsHtml}</ul>${more}</div>`;
+
+          const marker = L.marker(group.coords, { icon }).bindPopup(popup, { maxWidth:360 }).addTo(markerLayer);
+          markersByKey.set(key, { marker, coords:group.coords });
+          bounds.push(group.coords);
+        });
+
+        renderLocationList(grouped);
+
+        const totalEl = document.getElementById("worksMapTotal");
+        if (totalEl) totalEl.textContent = `${grouped.size} localidad${grouped.size === 1 ? "" : "es"}`;
+
+        if (bounds.length === 1) {
+          map.setView(bounds[0], 7.5);
+        } else if (bounds.length > 1) {
+          /* Más margen para que norte y sur no queden pegados/cortados */
+          map.fitBounds(bounds, {
+            paddingTopLeft:[48,58],
+            paddingBottomRight:[48,58],
+            maxZoom:7
+          });
+          /* Aleja medio nivel adicional si Leaflet encuadra demasiado justo */
+          setTimeout(() => {
+            const z = map.getZoom();
+            if (z > 5) map.setZoom(z - .35);
+          }, 40);
+        } else {
+          map.setView([-38.75, -69.75], 5.7);
+        }
+      }
+
+      function escapeHtml(value){
+        return String(value ?? "").replace(/[&<>"']/g, ch => ({
+          "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+        })[ch]);
+      }
+
+      function scheduleRefresh(){
+        clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(refreshMap, 80);
+      }
+
+      function watchWorks(){
+        const tbody = document.getElementById("worksBody");
+        if (!tbody) return;
+        if (observer) observer.disconnect();
+        observer = new MutationObserver(scheduleRefresh);
+        observer.observe(tbody, { childList:true, subtree:true, characterData:true });
+
+        ["worksCityFilter","worksStatusFilter","worksSearch","reloadWorksDefault"].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.addEventListener("change", scheduleRefresh);
+            el.addEventListener("input", scheduleRefresh);
+            el.addEventListener("click", scheduleRefresh);
+          }
+        });
+        scheduleRefresh();
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        initMap();
+        watchWorks();
+      });
+
+      document.addEventListener("click", e => {
+        if (e.target.closest('[data-tab="obras"]')) {
+          setTimeout(() => {
+            if (map) {
+              map.invalidateSize();
+              refreshMap();
+            }
+          }, 120);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
