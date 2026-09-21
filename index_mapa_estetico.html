@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EPAS · Mapa de obras</title>
+  <style>
+    :root{
+      --azul:#0b2942;
+      --azul-2:#123d61;
+      --celeste:#eaf2f7;
+      --borde:#dbe4eb;
+      --texto:#244155;
+      --muted:#607485;
+      --blanco:#ffffff;
+      --sombra:0 12px 28px rgba(11,41,66,.10);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--texto);
+      background:linear-gradient(180deg,#f4f7fa 0%,#edf3f7 100%);
+      padding:24px;
+    }
+    .wrap{max-width:1320px;margin:0 auto}
+    .panel{
+      background:var(--blanco);
+      border:1px solid var(--borde);
+      border-radius:20px;
+      box-shadow:var(--sombra);
+      overflow:hidden;
+    }
+    .panel-head{
+      padding:22px 24px 14px;
+      border-bottom:1px solid #edf2f6;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+    .panel-head h2{
+      margin:0 0 6px;
+      font-size:22px;
+      line-height:1.15;
+      color:var(--azul);
+    }
+    .panel-head p{
+      margin:0;
+      color:var(--muted);
+      line-height:1.45;
+      max-width:900px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 14px;
+      background:#f5f9fc;
+      border:1px solid var(--borde);
+      border-radius:999px;
+      color:var(--azul);
+      font-weight:700;
+      white-space:nowrap;
+    }
+
+    .map-layout{
+      display:grid;
+      grid-template-columns:300px minmax(0,1fr);
+      gap:22px;
+      padding:22px;
+      align-items:stretch;
+    }
+
+    .localities{
+      background:#f7fafc;
+      border:1px solid var(--borde);
+      border-radius:18px;
+      padding:18px;
+      min-height:560px;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    .localities h3,
+    .map-card h3{
+      margin:0 0 8px;
+      font-size:14px;
+      color:var(--azul);
+      letter-spacing:.02em;
+      text-transform:uppercase;
+    }
+    .localities p,
+    .map-card .hint{
+      margin:0 0 14px;
+      font-size:13px;
+      line-height:1.45;
+      color:var(--muted);
+    }
+    .locality-list{
+      display:grid;
+      gap:9px;
+      overflow:auto;
+      padding-right:4px;
+    }
+    .locality-item{
+      appearance:none;
+      width:100%;
+      border:1px solid #e5edf3;
+      background:#fff;
+      border-radius:14px;
+      padding:11px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      text-align:left;
+      cursor:pointer;
+      transition:.18s ease;
+      color:var(--texto);
+    }
+    .locality-item:hover,
+    .locality-item.active{
+      border-color:#bfd2e1;
+      background:#eef5fa;
+      transform:translateY(-1px);
+    }
+    .locality-name{
+      font-weight:700;
+      line-height:1.25;
+      padding-right:8px;
+    }
+    .locality-count{
+      min-width:30px;
+      height:30px;
+      padding:0 9px;
+      border-radius:999px;
+      background:var(--azul);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
+      font-weight:800;
+      flex:0 0 auto;
+    }
+
+    .map-card{
+      background:#f7fafc;
+      border:1px solid var(--borde);
+      border-radius:18px;
+      padding:18px;
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+    }
+    .map-stage{
+      position:relative;
+      flex:1;
+      border-radius:18px;
+      border:1px solid var(--borde);
+      background:
+        radial-gradient(circle at 25% 25%, rgba(255,255,255,.95), rgba(255,255,255,.82) 36%, transparent 55%),
+        linear-gradient(180deg,#f8fbfd 0%,#edf4f8 100%);
+      min-height:500px;
+      overflow:hidden;
+      padding:28px;
+    }
+    .map-inner{
+      position:relative;
+      width:100%;
+      height:100%;
+      min-height:444px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .neuquen-svg{
+      width:min(100%,520px);
+      height:auto;
+      filter:drop-shadow(0 12px 20px rgba(11,41,66,.12));
+      margin:8px 0;
+    }
+    .province-fill{fill:#dbeaf4}
+    .province-stroke{fill:none;stroke:#89a9c0;stroke-width:6;stroke-linejoin:round;stroke-linecap:round}
+    .province-detail{fill:none;stroke:#b8cddd;stroke-width:2.2;opacity:.75}
+
+    .marker-layer{
+      position:absolute;
+      inset:22px;
+      pointer-events:none;
+    }
+    .marker{
+      position:absolute;
+      transform:translate(-50%,-50%);
+      pointer-events:auto;
+      cursor:pointer;
+    }
+    .marker-dot{
+      width:34px;
+      height:34px;
+      border-radius:50%;
+      background:var(--azul);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      font-weight:800;
+      border:3px solid #fff;
+      box-shadow:0 8px 18px rgba(11,41,66,.20);
+      margin:0 auto;
+      position:relative;
+      z-index:2;
+    }
+    .marker-label{
+      position:absolute;
+      top:50%;
+      white-space:nowrap;
+      font-size:12px;
+      font-weight:700;
+      color:var(--azul);
+      background:rgba(255,255,255,.96);
+      border:1px solid #dce7ef;
+      border-radius:12px;
+      padding:6px 10px;
+      line-height:1.2;
+      box-shadow:0 8px 18px rgba(11,41,66,.08);
+    }
+    .marker.right .marker-label{left:40px;transform:translateY(-50%)}
+    .marker.left .marker-label{right:40px;transform:translateY(-50%)}
+    .marker.top .marker-label{left:50%;top:-12px;transform:translate(-50%,-100%)}
+    .marker.bottom .marker-label{left:50%;top:44px;transform:translateX(-50%)}
+    .marker.active .marker-dot{background:#18598b;transform:scale(1.08)}
+    .marker.active .marker-label{border-color:#b8d4e8;background:#fff}
+
+    .legend{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .legend-item{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:9px 12px;
+      background:#fff;
+      border:1px solid var(--borde);
+      border-radius:999px;
+      font-size:12px;
+      color:var(--texto);
+    }
+    .legend-dot{
+      width:12px;
+      height:12px;
+      border-radius:50%;
+      background:var(--azul);
+      border:2px solid #fff;
+      box-shadow:0 0 0 1px #cfdde8;
+      flex:0 0 auto;
+    }
+    .empty{
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.5;
+      padding:10px 2px;
+    }
+
+    @media (max-width:1120px){
+      .map-layout{grid-template-columns:260px minmax(0,1fr)}
+    }
+    @media (max-width:920px){
+      .map-layout{grid-template-columns:1fr}
+      .localities{min-height:unset;max-height:260px}
+      .map-stage{min-height:460px}
+    }
+    @media (max-width:640px){
+      body{padding:14px}
+      .panel-head,.map-layout{padding:16px}
+      .map-stage{padding:16px;min-height:420px}
+      .marker-layer{inset:14px}
+      .marker-label{font-size:11px;padding:5px 8px}
+      .marker-dot{width:30px;height:30px;font-size:12px}
+      .marker.right .marker-label{left:35px}
+      .marker.left .marker-label{right:35px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Distribución territorial de obras</h2>
+          <p>Versión más estética del cuadro, con mayor aire interno, sin provincias ni países limítrofes, y con las etiquetas separadas de los bordes para evitar cortes.</p>
+        </div>
+        <div class="pill"><span id="localityTotal">0</span> localidades con obras</div>
+      </div>
+
+      <div class="map-layout">
+        <aside class="localities">
+          <h3>Localidades con obras</h3>
+          <p>La lista queda del lado izquierdo para liberar visualmente el mapa y mejorar la lectura general del cuadro.</p>
+          <div id="localityList" class="locality-list"></div>
+        </aside>
+
+        <article class="map-card">
+          <h3>Provincia del Neuquén</h3>
+          <p class="hint">Se muestra sólo la provincia. Los círculos numerados indican la cantidad de obras por localidad.</p>
+
+          <div class="map-stage">
+            <div class="map-inner" id="mapCanvas">
+              <svg class="neuquen-svg" viewBox="0 0 420 640" aria-label="Mapa estilizado de la provincia del Neuquén" role="img">
+                <path class="province-fill" d="M189 17l32 18 24 28 30 6 16 41-4 33 26 28-5 25 27 27-13 40 20 45-11 34-33 34 10 26-20 20-9 41-18 25-21 3-28 19-27 37-38 8-17 28-42-3-21-20-18-53-31-28-43-24-13-33 9-31-14-45 19-19 8-43 27-34-7-28 21-31 1-32 31-16 22-43 36-16 16-34 24 2 14-18z"/>
+                <path class="province-stroke" d="M189 17l32 18 24 28 30 6 16 41-4 33 26 28-5 25 27 27-13 40 20 45-11 34-33 34 10 26-20 20-9 41-18 25-21 3-28 19-27 37-38 8-17 28-42-3-21-20-18-53-31-28-43-24-13-33 9-31-14-45 19-19 8-43 27-34-7-28 21-31 1-32 31-16 22-43 36-16 16-34 24 2 14-18z"/>
+                <path class="province-detail" d="M145 83l38 18m18 42l28 24m-136 54l46 19m76 28l34 27m-139 47l58 21m69 35l35 28m-177 18l63 22m70 20l26 23m-152 57l72 16m77 2l25 24m-147 49l58 6m28-114l20 44"/>
+              </svg>
+              <div id="markerLayer" class="marker-layer"></div>
+            </div>
+          </div>
+
+          <div class="legend">
+            <div class="legend-item"><span class="legend-dot"></span> Número = cantidad de obras</div>
+            <div class="legend-item">Diseño con márgenes internos para que no se corten nombres ni etiquetas</div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    /*
+      BLOQUE LISTO PARA INTEGRAR.
+      Si en tu dashboard ya existe la tabla #worksBody, este script toma los datos desde ahí.
+      Si no existe, usa los datos de ejemplo que están más abajo.
+    */
+
+    const LOCALIDADES = {
+      "ANDACOLLO": { x: 43, y: 14, label: 'right' },
+      "HUINGAN CO": { x: 45, y: 18, label: 'right' },
+      "HUINGAN-CO": { x: 45, y: 18, label: 'right' },
+      "LAS OVEJAS": { x: 40, y: 10, label: 'left' },
+      "VILLA DEL NAHUEVE": { x: 51, y: 20, label: 'right' },
+      "CHOS MALAL": { x: 48, y: 23, label: 'right' },
+      "BUTA RANQUIL": { x: 68, y: 26, label: 'right' },
+      "RINCON DE LOS SAUCES": { x: 72, y: 33, label: 'right' },
+      "TAQUIMILAN": { x: 51, y: 29, label: 'left' },
+      "TRICAO MALAL": { x: 55, y: 34, label: 'left' },
+      "LONCOPUE": { x: 39, y: 34, label: 'left' },
+      "ZAPALA": { x: 48, y: 47, label: 'left' },
+      "ALUMINE": { x: 31, y: 57, label: 'left' },
+      "PLAZA HUINCUL": { x: 61, y: 53, label: 'right' },
+      "CUTRAL CO": { x: 64, y: 55, label: 'right' },
+      "NEUQUEN": { x: 74, y: 66, label: 'right' },
+      "PLOTTIER": { x: 70, y: 68, label: 'right' },
+      "SENILLOSA": { x: 63, y: 69, label: 'left' },
+      "PICUN LEUFU": { x: 55, y: 65, label: 'left' },
+      "SAN PATRICIO DEL CHANAR": { x: 69, y: 59, label: 'right' },
+      "SAUZAL BONITO": { x: 66, y: 49, label: 'right' },
+      "JUNIN DE LOS ANDES": { x: 33, y: 72, label: 'left' },
+      "SAN MARTIN DE LOS ANDES": { x: 24, y: 79, label: 'left' },
+      "VILLA TRAFUL": { x: 20, y: 86, label: 'left' },
+      "VILLA LA ANGOSTURA": { x: 11, y: 92, label: 'right' },
+      "PIEDRA DEL AGUILA": { x: 46, y: 74, label: 'right' },
+      "LAS LAJAS": { x: 39, y: 43, label: 'left' },
+      "EL HUECU": { x: 42, y: 27, label: 'left' }
+    };
+
+    const ALIASES = {
+      "HUINGANCO": "HUINGAN CO",
+      "HUINGAN-CÓ": "HUINGAN CO",
+      "SAN MARTIN": "SAN MARTIN DE LOS ANDES",
+      "SAN MARTIN DE LOS ANDES": "SAN MARTIN DE LOS ANDES",
+      "S M DE LOS ANDES": "SAN MARTIN DE LOS ANDES",
+      "VILLA LA ANGOSTURA": "VILLA LA ANGOSTURA",
+      "P HUINCUL": "PLAZA HUINCUL",
+      "PLAZA HUINCUL": "PLAZA HUINCUL",
+      "CUTRAL-CO": "CUTRAL CO",
+      "NEUQUEN CAPITAL": "NEUQUEN",
+      "CAPITAL": "NEUQUEN",
+      "ALUMINÉ": "ALUMINE",
+      "RINCÓN DE LOS SAUCES": "RINCON DE LOS SAUCES"
+    };
+
+    const SAMPLE_WORKS = [
+      { obra: 'Mejoras en canal', localidad: 'Andacollo' },
+      { obra: 'Tapa y tramo canal', localidad: 'Andacollo' },
+      { obra: 'Limpieza de desagües', localidad: 'Huingan-Co' },
+      { obra: 'Sistema de captación', localidad: 'Villa del Nahueve' },
+      { obra: 'Mantenimiento de bombas', localidad: 'Chos Malal' },
+      { obra: 'Bocatoma y canal principal', localidad: 'Rincón de los Sauces' },
+      { obra: 'Espigón y limpieza de canales', localidad: 'Sauzal Bonito' },
+      { obra: 'Limpieza y dragado', localidad: 'Plaza Huincul' },
+      { obra: 'Canal urbano', localidad: 'Neuquén' },
+      { obra: 'Perforaciones', localidad: 'Aluminé' },
+      { obra: 'Canal principal', localidad: 'Aluminé' },
+      { obra: 'Obra en comunidad', localidad: 'San Martín de los Andes' },
+      { obra: 'Obra de servicio', localidad: 'Junín de los Andes' },
+      { obra: 'Intervención de red', localidad: 'Villa La Angostura' },
+      { obra: 'Acción de mantenimiento', localidad: 'Zapala' }
+    ];
+
+    function normalize(value){
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+        .replace(/\./g,'')
+        .replace(/\s+/g,' ')
+        .trim();
+    }
+
+    function canonicalLocality(name){
+      const key = normalize(name);
+      return ALIASES[key] || key;
+    }
+
+    function prettify(name){
+      return String(name || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function getWorksData(){
+      const tbody = document.getElementById('worksBody');
+      if (!tbody) return SAMPLE_WORKS;
+      const rows = [...tbody.querySelectorAll('tr')].map(tr => {
+        const tds = tr.querySelectorAll('td');
+        return {
+          obra: tds[1]?.textContent.trim() || '',
+          localidad: tds[2]?.textContent.trim() || ''
+        };
+      }).filter(item => item.obra && item.localidad);
+      return rows.length ? rows : SAMPLE_WORKS;
+    }
+
+    function groupWorks(rows){
+      const grouped = new Map();
+      for (const row of rows){
+        const key = canonicalLocality(row.localidad);
+        if (!LOCALIDADES[key]) continue;
+        if (!grouped.has(key)){
+          grouped.set(key, {
+            key,
+            name: prettify(key),
+            count: 0,
+            works: []
+          });
+        }
+        const item = grouped.get(key);
+        item.count += 1;
+        item.works.push(row.obra);
+      }
+      return [...grouped.values()].sort((a,b) => a.name.localeCompare(b.name, 'es'));
+    }
+
+    function render(){
+      const data = groupWorks(getWorksData());
+      const list = document.getElementById('localityList');
+      const markers = document.getElementById('markerLayer');
+      const total = document.getElementById('localityTotal');
+      total.textContent = data.length;
+
+      if (!data.length){
+        list.innerHTML = '<div class="empty">No hay localidades con obras visibles para mostrar.</div>';
+        markers.innerHTML = '';
+        return;
+      }
+
+      list.innerHTML = data.map(item => `
+        <button class="locality-item" type="button" data-key="${item.key}">
+          <span class="locality-name">${item.name}</span>
+          <span class="locality-count">${item.count}</span>
+        </button>
+      `).join('');
+
+      markers.innerHTML = data.map(item => {
+        const pos = LOCALIDADES[item.key];
+        const titles = item.works.slice(0,5).join(' · ');
+        return `
+          <div class="marker ${pos.label}" data-key="${item.key}" title="${titles}" style="left:${pos.x}%; top:${pos.y}%;">
+            <div class="marker-dot">${item.count}</div>
+            <div class="marker-label">${item.name}</div>
+          </div>
+        `;
+      }).join('');
+
+      function activate(key){
+        document.querySelectorAll('.locality-item, .marker').forEach(el => el.classList.toggle('active', el.dataset.key === key));
+      }
+
+      document.querySelectorAll('.locality-item').forEach(btn => {
+        btn.addEventListener('mouseenter', () => activate(btn.dataset.key));
+        btn.addEventListener('focus', () => activate(btn.dataset.key));
+        btn.addEventListener('mouseleave', () => activate(''));
+        btn.addEventListener('click', () => activate(btn.dataset.key));
+      });
+
+      document.querySelectorAll('.marker').forEach(marker => {
+        marker.addEventListener('mouseenter', () => activate(marker.dataset.key));
+        marker.addEventListener('mouseleave', () => activate(''));
+        marker.addEventListener('click', () => activate(marker.dataset.key));
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
