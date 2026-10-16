@@ -1,0 +1,89 @@
+name: Fix EPAS dashboard
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-dashboard.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Unify logo map and doughnut colors
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          # Quitar el bloque viejo que anulaba Leaflet y buscaba planMarkerLayer inexistente.
+          s = re.sub(
+              r'\n<script>\n// EPAS v6: mapa provincial local, normalización de sistemas y etiquetas de gráficos\..*?</script>\n(?=</body>)',
+              '\n',
+              s,
+              flags=re.S
+          )
+
+          # Agregar solamente mejoras visuales que no pisan el mapa real.
+          color_script = r'''
+<script>
+// EPAS: colores de gráficos circulares sin interferir con el mapa Leaflet.
+(function(){
+  if(typeof Chart==='undefined') return;
+  const palette=['#1688f0','#26b576','#f5a623','#7b61ff','#47b8c4','#9aa9b5'];
+  const named={
+    'Obras':'#1688f0',
+    'Proyectos a contratar':'#26b576',
+    'Cloaca':'#1688f0',
+    'Agua':'#26b576',
+    'Otros':'#9aa9b5',
+    'Mixto':'#7b61ff'
+  };
+  Chart.register({
+    id:'epasDoughnutColors',
+    beforeUpdate(chart){
+      if(chart.config.type!=='doughnut') return;
+      const ds=chart.data?.datasets?.[0];
+      const labels=chart.data?.labels||[];
+      if(!ds) return;
+      ds.backgroundColor=labels.map((label,i)=>named[label]||palette[i%palette.length]);
+      ds.hoverBackgroundColor=ds.backgroundColor;
+      ds.borderColor='#ffffff';
+      ds.borderWidth=3;
+    }
+  });
+})();
+</script>
+'''
+
+          if 'epasDoughnutColors' not in s:
+              s = s.replace('</body>', color_script + '\n</body>')
+
+          # Forzar refresco del JS/CSS para evitar caché vieja.
+          s = re.sub(r'styles\.css\?v=[^"\']+', 'styles.css?v=20261016-1', s)
+          s = re.sub(r'app\.js\?v=[^"\']+', 'app.js?v=20261016-1', s)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit fix
+        shell: bash
+        run: |
+          git config user.name "EPAS Dashboard Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes needed"
+          else
+            git commit -m "Unify logo map and chart colors"
+            git push origin main
+          fi
