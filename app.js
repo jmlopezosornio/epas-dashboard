@@ -103,26 +103,130 @@ function renderPlanCharts(rows){const byCity=aggregatePlan(rows,'localidad').sli
 const PLAN_COORDS={
 'NEUQUEN':[-38.9516,-68.0591],'PICUN LEUFU':[-39.5238,-69.2797],'PLOTTIER':[-38.9667,-68.2333],'TRICAO MALAL':[-37.0455,-70.3350],'VARVARCO':[-36.8568,-70.6806],'CHOS MALAL':[-37.3781,-70.2709],'LAS OVEJAS':[-36.9895,-70.7498],'VILLA LA ANGOSTURA':[-40.7618,-71.6463],'SAN MARTIN DE LOS ANDES':[-40.1572,-71.3524],'ANELO':[-38.3546,-68.7884],'JUNIN DE LOS ANDES':[-39.9504,-71.0694],'EL ALAMITO':[-37.2465,-70.3930],'EL CHOLAR':[-37.4428,-70.6436],'OCTAVIO PICO':[-37.5865,-68.2686],'TAQUIMILAN':[-37.5175,-70.2488],'LOS MENUCOS':[-37.13388,-70.40535],'VILLA TRAFUL':[-40.6550,-71.4078],'EL CHOCON':[-39.2594,-68.7795]};
 function mapKey(v){return cleanText(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\./g,'').replace(/\s+/g,' ').trim();}
-function initPlanMap(){ /* mapa SVG local: no requiere proveedor externo */ }
-function projectPlanCoords(coords){
-  const lat=coords[0],lon=coords[1];
-  const latMax=-35.85,latMin=-41.28,lonMin=-71.95,lonMax=-67.45;
-  const x=6 + ((lon-lonMin)/(lonMax-lonMin))*88;
-  const y=5 + ((latMax-lat)/(latMax-latMin))*90;
-  return {x:Math.max(3,Math.min(97,x)),y:Math.max(3,Math.min(97,y))};
+const NEUQUEN_GEOJSON_URL='https://infra.datos.gob.ar/georef/provincias.geojson';
+
+function initPlanMap(){
+  if(state.planMap || typeof L==='undefined') return;
+  const el=document.getElementById('planMap');
+  if(!el) return;
+
+  state.planMap=L.map(el,{
+    zoomControl:false,
+    attributionControl:false,
+    dragging:false,
+    scrollWheelZoom:false,
+    doubleClickZoom:false,
+    boxZoom:false,
+    keyboard:false,
+    tap:false
+  });
+
+  state.planMap.setView([-38.6,-70.0],6);
+  state.planLayer=L.layerGroup().addTo(state.planMap);
+
+  fetch(NEUQUEN_GEOJSON_URL,{cache:'force-cache'})
+    .then(r=>{if(!r.ok)throw new Error(`GeoJSON ${r.status}`);return r.json();})
+    .then(gj=>{
+      const features=(gj.features||[]).filter(f=>{
+        const n=cleanText(f?.properties?.nombre||f?.properties?.name||'');
+        return mapKey(n)==='NEUQUEN';
+      });
+      if(!features.length) throw new Error('No se encontró la geometría de Neuquén');
+
+      state.planProvinceLayer=L.geoJSON(
+        {type:'FeatureCollection',features},
+        {
+          style:{
+            color:'#2b79b9',
+            weight:2.2,
+            opacity:1,
+            fillColor:'#d9ebf7',
+            fillOpacity:.95,
+            lineJoin:'round'
+          }
+        }
+      ).addTo(state.planMap);
+
+      state.planMap.fitBounds(state.planProvinceLayer.getBounds(),{
+        paddingTopLeft:[28,26],
+        paddingBottomRight:[28,26],
+        animate:false
+      });
+      setTimeout(()=>state.planMap.invalidateSize(),80);
+    })
+    .catch(err=>{
+      console.warn('No se pudo cargar el límite oficial de Neuquén:',err);
+      // Respaldo sin API key: mapa base estándar.
+      state.planFallbackTiles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        maxZoom:18
+      }).addTo(state.planMap);
+      state.planMap.fitBounds([[-41.2,-71.9],[-36.0,-67.5]],{
+        padding:[16,16],
+        animate:false
+      });
+    });
 }
+
 function renderPlanMap(rows){
+  initPlanMap();
+  if(!state.planMap || !state.planLayer) return;
+
+  state.planLayer.clearLayers();
+
   const groups=new Map();
-  rows.forEach(x=>{const key=mapKey(x.localidad),coords=PLAN_COORDS[key];if(!coords)return;if(!groups.has(key))groups.set(key,{key,name:x.localidad,coords,works:0,projects:0});const g=groups.get(key);x.type==='OBRA'?g.works++:g.projects++;});
-  const data=[...groups.values()].sort((a,b)=>(b.works+b.projects)-(a.works+a.projects)||a.name.localeCompare(b.name,'es'));
+  rows.forEach(x=>{
+    const key=mapKey(x.localidad),coords=PLAN_COORDS[key];
+    if(!coords) return;
+    if(!groups.has(key)) groups.set(key,{key,name:x.localidad,coords,works:0,projects:0});
+    const g=groups.get(key);
+    x.type==='OBRA' ? g.works++ : g.projects++;
+  });
+
+  const data=[...groups.values()].sort(
+    (a,b)=>(b.works+b.projects)-(a.works+a.projects)||a.name.localeCompare(b.name,'es')
+  );
+
   const list=document.getElementById('planLocationList');
-  list.innerHTML=data.length?data.map(g=>`<button class="plan-location-item" data-plan-locality="${escapeHtml(g.key)}"><span>${escapeHtml(g.name)}</span><strong>${g.works+g.projects}</strong></button>`).join(''):'<div class="map-empty">Sin localidades georreferenciadas.</div>';
-  const layer=document.getElementById('planMarkerLayer');if(!layer)return;
-  layer.innerHTML=data.map(g=>{const total=g.works+g.projects,cls=g.works&&g.projects?'both':g.projects?'project':'work',p=projectPlanCoords(g.coords);return `<button class="static-map-marker ${cls}" style="left:${p.x}%;top:${p.y}%" data-plan-locality="${escapeHtml(g.key)}" aria-label="${escapeHtml(g.name)}"><span>${total}</span><span class="map-tip">${escapeHtml(g.name)} · ${g.works} obras · ${g.projects} proyectos</span></button>`;}).join('');
-  const focus=(key)=>{const g=groups.get(key);if(!g)return;document.getElementById('planCityFilter').value=g.name;renderPlan();};
-  list.querySelectorAll('[data-plan-locality]').forEach(btn=>btn.addEventListener('click',()=>focus(btn.dataset.planLocality)));
-  layer.querySelectorAll('[data-plan-locality]').forEach(btn=>btn.addEventListener('click',()=>focus(btn.dataset.planLocality)));
+  list.innerHTML=data.length
+    ? data.map(g=>`<button class="plan-location-item" data-plan-locality="${escapeHtml(g.key)}"><span>${escapeHtml(g.name)}</span><strong>${g.works+g.projects}</strong></button>`).join('')
+    : '<div class="map-empty">Sin localidades georreferenciadas.</div>';
+
+  data.forEach(g=>{
+    const total=g.works+g.projects;
+    const cls=g.works&&g.projects?'both':g.projects?'project':'work';
+
+    const icon=L.divIcon({
+      className:'plan-div-icon',
+      html:`<div class="plan-map-marker ${cls}">${total}</div>`,
+      iconSize:[34,34],
+      iconAnchor:[17,17]
+    });
+
+    const marker=L.marker(g.coords,{icon,keyboard:false})
+      .bindTooltip(
+        `<strong>${escapeHtml(g.name)}</strong><br>Obras: ${g.works} · Proyectos: ${g.projects}`,
+        {direction:'top',offset:[0,-13],opacity:.96}
+      )
+      .addTo(state.planLayer);
+
+    marker.on('click',()=>{
+      document.getElementById('planCityFilter').value=g.name;
+      renderPlan();
+    });
+  });
+
+  list.querySelectorAll('[data-plan-locality]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const g=groups.get(btn.dataset.planLocality);
+      if(!g) return;
+      document.getElementById('planCityFilter').value=g.name;
+      renderPlan();
+    });
+  });
+
+  setTimeout(()=>state.planMap.invalidateSize(),60);
 }
+
 function renderPlanTable(rows){const tableRows=rows.filter(x=>x.type===state.planTableMode),body=document.getElementById('planDetailBody');document.getElementById('planWorksTabCount').textContent=`(${rows.filter(x=>x.type==='OBRA').length})`;document.getElementById('planProjectsTabCount').textContent=`(${rows.filter(x=>x.type==='PROYECTO').length})`;body.innerHTML=tableRows.length?tableRows.map(x=>`<tr><td>${escapeHtml(x.localidad)}</td><td class="work-name">${escapeHtml(x.denominacion)}</td><td><span class="system-pill">${escapeHtml(x.sistema)}</span></td><td class="numeric">${fmtMoney(x.presupuesto)}</td><td>${escapeHtml(x.plazo)}</td><td>${escapeHtml(x.anio)}</td><td class="numeric">${x.inv2027?fmtMoney(x.inv2027):'—'}</td><td class="numeric">${x.inv2028?fmtMoney(x.inv2028):'—'}</td><td class="numeric">${x.inv2029?fmtMoney(x.inv2029):'—'}</td><td class="exp-cell ${hasExpediente(x)?'':'no-exp'}">${hasExpediente(x)?escapeHtml(x.expediente):'Sin expediente'}</td></tr>`).join(''):'<tr><td class="empty-row" colspan="10">Sin registros para los filtros seleccionados.</td></tr>';}
 function renderPlan(){const rows=filteredPlanRows(),works=rows.filter(x=>x.type==='OBRA'),projects=rows.filter(x=>x.type==='PROYECTO'),cities=new Set(rows.map(x=>x.localidad));document.getElementById('kpiPlanWorks').textContent=NUM.format(works.length);document.getElementById('kpiPlanProjects').textContent=NUM.format(projects.length);document.getElementById('kpiPlanCities').textContent=NUM.format(cities.size);document.getElementById('kpiPlanBudget').textContent=fmtCompactMoney(rows.reduce((s,x)=>s+x.presupuesto,0));document.getElementById('kpiPlan2027').textContent=fmtCompactMoney(rows.reduce((s,x)=>s+x.inv2027,0));document.getElementById('worksBadge').textContent=works.length+projects.length;renderPlanCharts(rows);renderPlanMap(rows);renderPlanTable(rows);}
 async function loadDefaultWorks(){

@@ -225,3 +225,73 @@ body{background:#f4f8fb;color:#122b40}
 #tab-obras .system-pill{background:#e4f0ff!important;color:#166ab7!important}
 #tab-obras .panel-title h3{font-weight:800!important;letter-spacing:-.01em!important}
 @media(max-width:1250px){#tab-obras .plan-main-grid{grid-template-columns:1fr!important}#tab-obras .plan-map-layout{height:480px!important}}
+
+
+/* ===== V6 · mapa geográfico real de Neuquén ===== */
+.real-province-map{
+  position:relative;
+  overflow:hidden;
+  border:1px solid #d7e5ef !important;
+  border-radius:12px;
+  background:
+    radial-gradient(circle at 30% 20%,rgba(255,255,255,.9),rgba(255,255,255,0) 35%),
+    linear-gradient(180deg,#f4f9fc 0%,#eaf3f8 100%) !important;
+}
+.plan-real-map{
+  width:100%;
+  height:100%;
+  min-height:500px;
+  background:transparent;
+}
+.plan-real-map .leaflet-pane,
+.plan-real-map .leaflet-map-pane{
+  z-index:auto;
+}
+.plan-real-map .leaflet-overlay-pane svg{
+  filter:drop-shadow(0 8px 16px rgba(27,83,122,.12));
+}
+.plan-div-icon{
+  background:transparent !important;
+  border:0 !important;
+}
+.plan-map-marker{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:3px solid #fff;
+  color:#fff;
+  font-weight:900;
+  font-size:12px;
+  box-shadow:0 4px 11px rgba(13,52,82,.28);
+}
+.plan-map-marker.work{background:#1787eb}
+.plan-map-marker.project{background:#24ad73}
+.plan-map-marker.both{background:linear-gradient(90deg,#1787eb 0 50%,#24ad73 50% 100%)}
+.plan-real-map .leaflet-tooltip{
+  border:1px solid #d6e4ee;
+  border-radius:8px;
+  box-shadow:0 4px 12px rgba(11,41,66,.12);
+  color:#17364f;
+  font-family:inherit;
+  font-size:11px;
+  padding:7px 9px;
+}
+.plan-real-map .leaflet-tooltip:before{
+  border-top-color:#fff;
+}
+.plan-map-legend{
+  z-index:600 !important;
+}
+.static-province-map,
+.plan-province-svg,
+.plan-marker-layer,
+.static-map-marker,
+.map-context-label{
+  display:none !important;
+}
+@media(max-width:800px){
+  .plan-real-map{min-height:430px}
+}
