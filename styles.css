@@ -188,3 +188,40 @@ body{background:#f4f8fb;color:#122b40}
 .chart-panel canvas{color:#314b5e}
 @media(max-width:1200px){.topbar-inner{grid-template-columns:330px 1fr auto;padding:0 20px}.tab-button{padding:0 16px}.brand-full-name{font-size:11px}}
 @media(max-width:900px){.topbar-inner{grid-template-columns:1fr;padding:12px 16px;gap:8px}.brand-shell{height:auto}.tabbar{height:auto;overflow:auto}.tab-button{height:48px;white-space:nowrap}.topbar-user{display:none}.container{padding:14px}}
+
+/* ===== EPAS objetivo visual v5 ===== */
+#tab-obras { background:transparent; }
+#tab-obras .plan-heading{background:transparent!important;border:0!important;box-shadow:none!important;padding:0 2px!important;margin:0 0 10px!important}
+#tab-obras .plan-heading h2{font-size:28px!important;line-height:1.05!important;margin-top:1px!important}
+#tab-obras .plan-heading p{font-size:13px!important;margin-top:3px!important}
+#tab-obras .plan-filters{background:#fff!important;border:1px solid #d9e8f3!important;border-radius:12px!important;box-shadow:0 5px 18px rgba(22,73,109,.05)!important;padding:10px 12px!important;margin-bottom:12px!important}
+#tab-obras .plan-kpis{gap:10px!important;margin-bottom:12px!important}
+#tab-obras .plan-kpi{position:relative;min-height:88px!important;padding:13px 14px 12px 66px!important;border-radius:12px!important;box-shadow:0 5px 16px rgba(11,41,66,.05)!important}
+#tab-obras .plan-kpi::before{content:'';position:absolute;left:14px;top:15px;width:40px;height:40px;border-radius:50%;background:#e5f3ff;border:1px solid #d7ebfb}
+#tab-obras .plan-kpi::after{position:absolute;left:27px;top:24px;font-weight:900;font-size:18px;color:#167ee5;line-height:1}
+#tab-obras .kpi-work::after{content:'▤'}#tab-obras .kpi-project::after{content:'◆';color:#1b9b69}#tab-obras .kpi-location::after{content:'●';color:#167ee5}#tab-obras .kpi-budget::after{content:'$';color:#167ee5}#tab-obras .kpi-invest::after{content:'▥';color:#167ee5}
+#tab-obras .plan-kpi strong{font-size:25px!important;margin:7px 0 1px!important}
+#tab-obras .plan-kpi span{font-size:12px!important;color:#253e55!important}
+#tab-obras .plan-kpi small{font-size:11px!important}
+#tab-obras .plan-main-grid{grid-template-columns:minmax(520px,1.05fr) minmax(660px,1.35fr)!important;gap:12px!important}
+#tab-obras .plan-map-panel{padding:14px!important}
+#tab-obras .plan-map-layout{grid-template-columns:225px minmax(0,1fr)!important;height:505px!important}
+#tab-obras .plan-location-box{background:#fff!important}
+.static-province-map{position:relative;background:linear-gradient(180deg,#f7fbff,#eef6fb)!important;border:1px solid #dce9f2!important;overflow:hidden!important}
+.plan-province-svg{position:absolute;inset:18px 48px 18px 48px;width:calc(100% - 96px);height:calc(100% - 36px);filter:drop-shadow(0 10px 18px rgba(20,67,101,.12))}
+.plan-province-fill{fill:#d8eaf7;stroke:none}.plan-province-border{fill:none;stroke:#3d7cab;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.plan-marker-layer{position:absolute;inset:18px 48px 18px 48px;pointer-events:none}
+.static-map-marker{position:absolute;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 4px 13px rgba(9,50,80,.22);font-size:11px;font-weight:900;color:#fff;pointer-events:auto;cursor:pointer;transition:.15s ease}
+.static-map-marker.work{background:#1686ee}.static-map-marker.project{background:#24ad70}.static-map-marker.both{background:linear-gradient(90deg,#1686ee 0 50%,#24ad70 50%)}.static-map-marker:hover{transform:translate(-50%,-50%) scale(1.12);z-index:5}
+.static-map-marker .map-tip{display:none;position:absolute;left:38px;top:50%;transform:translateY(-50%);background:#fff;color:#19384f;border:1px solid #d8e4ec;border-radius:7px;padding:5px 7px;white-space:nowrap;font-size:10px;font-weight:800;box-shadow:0 4px 12px rgba(11,41,66,.12)}.static-map-marker:hover .map-tip{display:block}
+.map-context-label{position:absolute;color:#8799a7;text-transform:uppercase;letter-spacing:.04em;font-size:11px;font-weight:700;z-index:2}.map-chile{left:8px;top:48%}.map-mendoza{right:15px;top:9%}.map-rionegro{right:8px;bottom:9%}
+#tab-obras .plan-top-charts{grid-template-columns:1.25fr .95fr!important}
+#tab-obras .chart-panel,#tab-obras .expediente-card{box-shadow:0 5px 16px rgba(11,41,66,.05)!important}
+#tab-obras .plan-table-panel{border-radius:12px!important;box-shadow:0 5px 18px rgba(11,41,66,.05)!important}
+#tab-obras .plan-table td{color:#17334b!important;background:#fff!important;opacity:1!important;visibility:visible!important;font-size:11px!important}
+#tab-obras .plan-table td:first-child,#tab-obras .plan-table td:nth-child(2){color:#17334b!important;font-weight:600!important}
+#tab-obras .plan-table .work-name{display:table-cell!important;color:#17334b!important}
+#tab-obras .plan-table th{background:#eff5f9!important;color:#3d5669!important}
+#tab-obras .system-pill{background:#e4f0ff!important;color:#166ab7!important}
+#tab-obras .panel-title h3{font-weight:800!important;letter-spacing:-.01em!important}
+@media(max-width:1250px){#tab-obras .plan-main-grid{grid-template-columns:1fr!important}#tab-obras .plan-map-layout{height:480px!important}}
