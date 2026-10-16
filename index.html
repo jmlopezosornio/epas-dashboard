@@ -5,36 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b2942">
   <title>EPAS | Tablero de Gestión</title>
-  <link rel="stylesheet" href="styles.css?v=20261015-3">
+  <link rel="stylesheet" href="styles.css?v=20261015-5">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+/* EPAS v4 - encabezado y correcciones visuales */
+body{background:#f4f8fb!important;color:#122b40!important}
+.topbar{position:sticky!important;top:0;z-index:40;background:linear-gradient(180deg,#0c3a67 0%,#0b2f57 100%)!important;box-shadow:0 2px 10px rgba(4,33,60,.22)!important;padding:0!important}
+.topbar-inner{max-width:none!important;min-height:64px!important;padding:0 46px!important;display:grid!important;grid-template-columns:390px 1fr auto!important;align-items:center!important;gap:20px!important}
+.brand-shell{height:64px;display:flex;align-items:center}.brand-logo-image{display:block;height:48px;width:auto;max-width:100%;object-fit:contain;filter:brightness(0) invert(1)}
+.tabbar{height:64px!important;align-self:stretch!important;justify-content:flex-start!important;gap:0!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;position:static!important;overflow:hidden}
+.tab-button{height:64px!important;border-radius:0!important;padding:0 28px!important;background:transparent!important;color:#fff!important;display:flex!important;align-items:center!important;gap:10px!important;font-size:13px!important;font-weight:700!important;border-left:1px solid rgba(255,255,255,.08)!important;border-right:1px solid rgba(0,0,0,.08)!important}
+.tab-button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.95}.tab-button:hover{background:rgba(35,132,201,.24)!important}.tab-button.active{background:linear-gradient(180deg,rgba(23,111,155,.58),rgba(25,121,183,.7))!important;box-shadow:inset 0 -4px 0 #55c6ff!important;color:#fff!important}.badge{display:none!important}
+.topbar-user{background:transparent!important;padding:0!important;gap:10px!important;font-size:12px!important}.topbar-user .bell-icon{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.user-avatar{width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#fff 0 20%,#b9c8d5 22% 42%,#8ba0b2 44% 100%);border:2px solid rgba(255,255,255,.18)}.chevron{font-size:15px;opacity:.9}
+.container{max-width:none!important;padding:16px 34px 44px!important;background:#f4f8fb!important}
+#tab-obras>.status-card{display:none!important}.section-heading.plan-heading{margin:0 0 12px!important;background:#fff;border:1px solid #dde9f2;border-radius:12px;padding:10px 16px;box-shadow:0 5px 18px rgba(11,41,66,.04)}.section-heading.plan-heading h2{font-size:26px;color:#0d2b48}.section-heading.plan-heading p{font-size:13px;color:#527189}.section-kicker{font-size:11px;color:#496c89!important;letter-spacing:.14em!important;text-transform:uppercase!important;font-weight:800}.button.primary{background:#0b82e6!important;border-radius:10px;padding:0 18px}.plan-table td{color:#243f54!important}.plan-table td.work-name{color:#17334b!important;font-weight:600}.plan-table td.numeric{color:#243f54!important}
+@media(max-width:1200px){.topbar-inner{grid-template-columns:330px 1fr auto!important;padding:0 20px!important}.tab-button{padding:0 16px!important}.brand-logo-image{height:42px}}
+@media(max-width:900px){.topbar-inner{grid-template-columns:1fr!important;padding:12px 16px!important;gap:8px!important}.brand-shell{height:auto}.brand-logo-image{height:40px}.tabbar{height:auto!important;overflow:auto!important}.tab-button{height:48px!important;white-space:nowrap}.topbar-user{display:none!important}.container{padding:14px!important}}
+</style>
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand-shell">
-        <div class="brand-logo" aria-hidden="true">
-          <span></span><span></span><span></span>
-        </div>
-        <div class="brand-text">
-          <strong>EPAS</strong>
-          <span>Ente Provincial de Agua y Saneamiento</span>
-        </div>
+        <img class="brand-logo-image" src="assets/epas-logo.png" alt="EPAS - Ente Provincial de Agua y Saneamiento">
       </div>
 
       <nav class="tabbar" aria-label="Secciones del tablero">
-        <button class="tab-button active" data-tab="cobranza">Facturación y Cobranza</button>
-        <button class="tab-button" data-tab="obras">Obras <span id="worksBadge" class="badge">0</span></button>
-        <button class="tab-button" data-tab="contratos">Contratos y Servicios <span id="contractsBadge" class="badge">0</span></button>
+        <button class="tab-button active" data-tab="cobranza">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M15 3v4h4"/><path d="M9 11h6M9 15h6"/></svg>
+          <span>Facturación y Cobranza</span>
+        </button>
+        <button class="tab-button" data-tab="obras">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 20V9h14v11M8 9V6h8v3M10 6V4h4v2"/></svg>
+          <span>Obras</span><span id="worksBadge" class="badge">0</span>
+        </button>
+        <button class="tab-button" data-tab="contratos">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M15 3v4h4"/><path d="M9 12l2 2 4-4"/></svg>
+          <span>Contratos y Servicios</span><span id="contractsBadge" class="badge">0</span>
+        </button>
       </nav>
 
       <div class="topbar-user">
-        <span class="user-dot"></span>
+        <svg class="bell-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17h12l-1.5-2V10a4.5 4.5 0 0 0-9 0v5z"/><path d="M10 20h4"/></svg>
+        <span class="user-avatar" aria-hidden="true"></span>
         <span>Usuario EPAS</span>
+        <span class="chevron">⌄</span>
       </div>
     </div>
+  </header>
 
   <main class="container">
     <section id="tab-cobranza" class="tab-content active">
@@ -119,6 +141,27 @@
   </main>
 
   <footer>EPAS · Tablero de gestión</footer>
-  <script src="app.js?v=20261015-3"></script>
+  <script src="app.js?v=20261015-5"></script>
+
+<script>
+// Correcciones EPAS v4: proveedor de mapa sin API key y etiquetas de gráficos.
+(function(){
+  const originalTileLayer = L.tileLayer;
+  L.tileLayer = function(url, options){
+    if(typeof url === 'string' && url.includes('basemaps.cartocdn.com')){
+      url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+      options=Object.assign({},options||{},{maxZoom:18,attribution:'© OpenStreetMap'});
+    }
+    return originalTileLayer.call(L,url,options);
+  };
+  window.createBar = function(name,canvasId,labels,data,horizontal=false){
+    if(state.charts[name]){state.charts[name].destroy();state.charts[name]=null;}
+    const scales=horizontal
+      ? {x:{grid:{display:true},ticks:{callback:v=>fmtCompactMoney(v)}},y:{grid:{display:false},ticks:{callback:function(v){return this.getLabelForValue(v);}}}}
+      : {x:{grid:{display:false}},y:{grid:{display:true},ticks:{callback:v=>fmtCompactMoney(v)}}};
+    state.charts[name]=new Chart(document.getElementById(canvasId),{type:'bar',data:{labels,datasets:[{data,borderRadius:7,maxBarThickness:52}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:horizontal?'y':'x',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtMoney(c.raw)}}},scales}});
+  };
+})();
+</script>
 </body>
 </html>
