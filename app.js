@@ -36,7 +36,7 @@ function toSmartTitleCase(value){
   }).join('');
 }
 function numeric(v){ if(typeof v==='string'){ const n=Number(v.replace(/\./g,'').replace(',','.').replace(/[^0-9.-]/g,'')); return Number.isFinite(n)?n:0; } const n=Number(v); return Number.isFinite(n)?n:0; }
-function escapeHtml(s){ return String(s ?? '').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function escapeHtml(s){ return String(s ?? '').replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c])); }
 function fmtMoney(v){ return ARS.format(numeric(v)); }
 function fmtCompactMoney(v){ const n=numeric(v),a=Math.abs(n); if(a>=1e9)return `$ ${PCT.format(n/1e9)} mil M`; if(a>=1e6)return `$ ${PCT.format(n/1e6)} M`; return fmtMoney(n); }
 function fmtDate(d){ return d instanceof Date&&!isNaN(d)?DATE_FMT.format(d):'—'; }
@@ -45,7 +45,7 @@ function startOfToday(){ const d=new Date(); return new Date(d.getFullYear(),d.g
 function daysBetween(a,b){ return Math.ceil((b-a)/86400000); }
 function staffNumber(v){ const s=cleanText(v); if(!s)return 0; const nums=[...s.matchAll(/\d+/g)].map(m=>Number(m[0])); return nums.reduce((a,b)=>a+b,0); }
 
-for(const btn of document.querySelectorAll('.tab-button')) btn.addEventListener('click',()=>{document.querySelectorAll('.tab-button').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(s=>s.classList.remove('active'));btn.classList.add('active');document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');setTimeout(()=>Object.values(state.charts).forEach(c=>c?.resize()),50);});
+for(const btn of document.querySelectorAll('.tab-button')) btn.addEventListener('click',()=>{document.querySelectorAll('.tab-button').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(s=>s.classList.remove('active'));btn.classList.add('active');document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');setTimeout(()=>{Object.values(state.charts).forEach(c=>c?.resize());if(btn.dataset.tab==='obras'){renderPlanMap(filteredPlanRows());setTimeout(()=>refreshPlanMapView(),120);}},50);});
 for(const btn of document.querySelectorAll('.subtab-button[data-contract-view]')) btn.addEventListener('click',()=>{document.querySelectorAll('.subtab-button[data-contract-view]').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.contract-view').forEach(s=>s.classList.remove('active'));btn.classList.add('active');document.getElementById(`contract-view-${btn.dataset.contractView}`).classList.add('active');setTimeout(()=>Object.values(state.charts).forEach(c=>c?.resize()),50);});
 
 async function loadArrayBuffer(url){ const response=await fetch(url,{cache:'no-store'}); if(!response.ok)throw new Error(`No se pudo cargar ${url}`); return response.arrayBuffer(); }
@@ -156,7 +156,6 @@ function initPlanMap(){
     })
     .catch(err=>{
       console.warn('No se pudo cargar el límite oficial de Neuquén:',err);
-      // Respaldo sin API key: mapa base estándar.
       state.planFallbackTiles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
         maxZoom:18
       }).addTo(state.planMap);
@@ -167,12 +166,24 @@ function initPlanMap(){
     });
 }
 
+function refreshPlanMapView(){
+  if(!state.planMap) return;
+  state.planMap.invalidateSize(true);
+  if(state.planProvinceLayer && state.planProvinceLayer.getBounds().isValid()){
+    state.planMap.fitBounds(state.planProvinceLayer.getBounds(),{
+      paddingTopLeft:[28,26],
+      paddingBottomRight:[28,26],
+      animate:false
+    });
+  }else{
+    state.planMap.fitBounds([[-41.2,-71.9],[-36.0,-67.5]],{
+      padding:[16,16],
+      animate:false
+    });
+  }
+}
+
 function renderPlanMap(rows){
-  initPlanMap();
-  if(!state.planMap || !state.planLayer) return;
-
-  state.planLayer.clearLayers();
-
   const groups=new Map();
   rows.forEach(x=>{
     const key=mapKey(x.localidad),coords=PLAN_COORDS[key];
@@ -187,9 +198,19 @@ function renderPlanMap(rows){
   );
 
   const list=document.getElementById('planLocationList');
-  list.innerHTML=data.length
-    ? data.map(g=>`<button class="plan-location-item" data-plan-locality="${escapeHtml(g.key)}"><span>${escapeHtml(g.name)}</span><strong>${g.works+g.projects}</strong></button>`).join('')
-    : '<div class="map-empty">Sin localidades georreferenciadas.</div>';
+  if(list){
+    list.innerHTML=data.length
+      ? data.map(g=>`<button class="plan-location-item" data-plan-locality="${escapeHtml(g.key)}"><span>${escapeHtml(g.name)}</span><strong>${g.works+g.projects}</strong></button>`).join('')
+      : '<div class="map-empty">Sin localidades georreferenciadas.</div>';
+  }
+
+  const worksTab=document.getElementById('tab-obras');
+  if(!worksTab || !worksTab.classList.contains('active')) return;
+
+  initPlanMap();
+  if(!state.planMap || !state.planLayer) return;
+
+  state.planLayer.clearLayers();
 
   data.forEach(g=>{
     const total=g.works+g.projects;
@@ -202,29 +223,30 @@ function renderPlanMap(rows){
       iconAnchor:[17,17]
     });
 
-    const marker=L.marker(g.coords,{icon,keyboard:false})
+    L.marker(g.coords,{icon,keyboard:false})
       .bindTooltip(
         `<strong>${escapeHtml(g.name)}</strong><br>Obras: ${g.works} · Proyectos: ${g.projects}`,
         {direction:'top',offset:[0,-13],opacity:.96}
       )
+      .on('click',()=>{
+        document.getElementById('planCityFilter').value=g.name;
+        renderPlan();
+      })
       .addTo(state.planLayer);
-
-    marker.on('click',()=>{
-      document.getElementById('planCityFilter').value=g.name;
-      renderPlan();
-    });
   });
 
-  list.querySelectorAll('[data-plan-locality]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const g=groups.get(btn.dataset.planLocality);
-      if(!g) return;
-      document.getElementById('planCityFilter').value=g.name;
-      renderPlan();
+  if(list){
+    list.querySelectorAll('[data-plan-locality]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const g=groups.get(btn.dataset.planLocality);
+        if(!g) return;
+        document.getElementById('planCityFilter').value=g.name;
+        renderPlan();
+      });
     });
-  });
+  }
 
-  setTimeout(()=>state.planMap.invalidateSize(),60);
+  setTimeout(()=>refreshPlanMapView(),100);
 }
 
 function renderPlanTable(rows){const tableRows=rows.filter(x=>x.type===state.planTableMode),body=document.getElementById('planDetailBody');document.getElementById('planWorksTabCount').textContent=`(${rows.filter(x=>x.type==='OBRA').length})`;document.getElementById('planProjectsTabCount').textContent=`(${rows.filter(x=>x.type==='PROYECTO').length})`;body.innerHTML=tableRows.length?tableRows.map(x=>`<tr><td>${escapeHtml(x.localidad)}</td><td class="work-name">${escapeHtml(x.denominacion)}</td><td><span class="system-pill">${escapeHtml(x.sistema)}</span></td><td class="numeric">${fmtMoney(x.presupuesto)}</td><td>${escapeHtml(x.plazo)}</td><td>${escapeHtml(x.anio)}</td><td class="numeric">${x.inv2027?fmtMoney(x.inv2027):'—'}</td><td class="numeric">${x.inv2028?fmtMoney(x.inv2028):'—'}</td><td class="numeric">${x.inv2029?fmtMoney(x.inv2029):'—'}</td><td class="exp-cell ${hasExpediente(x)?'':'no-exp'}">${hasExpediente(x)?escapeHtml(x.expediente):'Sin expediente'}</td></tr>`).join(''):'<tr><td class="empty-row" colspan="10">Sin registros para los filtros seleccionados.</td></tr>';}
@@ -259,7 +281,7 @@ async function loadDefaultWorks(){
     }
   }
 }
-function exportPlanCsv(){const rows=filteredPlanRows().filter(x=>x.type===state.planTableMode),header=['Localidad','Denominación','Sistema','Presupuesto','Plazo','Año de ejecución','Inv. 2027','Inv. 2028','Inv. 2029','Expediente'];const esc=v=>`"${String(v??'').replace(/"/g,'""')}"`;const csv='\ufeff'+[header,...rows.map(x=>[x.localidad,x.denominacion,x.sistema,x.presupuesto,x.plazo,x.anio,x.inv2027,x.inv2028,x.inv2029,x.expediente])].map(r=>r.map(esc).join(';')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=state.planTableMode==='OBRA'?'obras_epas.csv':'proyectos_a_contratar_epas.csv';a.click();URL.revokeObjectURL(a.href);}
+function exportPlanCsv(){const rows=filteredPlanRows().filter(x=>x.type===state.planTableMode),header=['Localidad','Denominación','Sistema','Presupuesto','Plazo','Año de ejecución','Inv. 2027','Inv. 2028','Inv. 2029','Expediente'];const esc=v=>`\"${String(v??'').replace(/\"/g,'\"\"')}\"`;const csv='\ufeff'+[header,...rows.map(x=>[x.localidad,x.denominacion,x.sistema,x.presupuesto,x.plazo,x.anio,x.inv2027,x.inv2028,x.inv2029,x.expediente])].map(r=>r.map(esc).join(';')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=state.planTableMode==='OBRA'?'obras_epas.csv':'proyectos_a_contratar_epas.csv';a.click();URL.revokeObjectURL(a.href);}
 
 // Contratos y servicios
 function parseContracts(buffer){
@@ -330,8 +352,7 @@ function renderContracts(){
 }
 function filteredProcessContracts(){const city=document.getElementById('processCityFilter').value,q=cleanText(document.getElementById('processSearch').value).toLowerCase();return state.processContracts.filter(c=>(city==='ALL'||c.localidad===city)&&(!q||`${c.contrato} ${c.expediente} ${c.empresa}`.toLowerCase().includes(q)));}
 function renderProcessContracts(){const rows=filteredProcessContracts(),budget=rows.reduce((s,c)=>s+c.presupuesto,0),awarded=rows.reduce((s,c)=>s+c.adjudicado,0),cities=new Set(rows.map(c=>c.localidad));document.getElementById('kpiProcess').textContent=NUM.format(rows.length);document.getElementById('kpiProcessBudget').textContent=fmtCompactMoney(budget);document.getElementById('kpiProcessAwarded').textContent=fmtCompactMoney(awarded);document.getElementById('kpiProcessCities').textContent=NUM.format(cities.size);document.getElementById('processTableTotal').textContent=`${rows.length} trámite${rows.length===1?'':'s'}`;document.getElementById('processBody').innerHTML=rows.length?rows.map(c=>`<tr><td>${escapeHtml(c.localidad)}</td><td class="contract-name">${escapeHtml(c.contrato)}</td><td class="exp-cell">${escapeHtml(c.expediente)}</td><td class="numeric">${c.presupuesto?fmtMoney(c.presupuesto):'—'}</td><td class="numeric">${c.adjudicado?fmtMoney(c.adjudicado):'—'}</td><td>${escapeHtml(c.empresa)||'—'}</td><td>${c.plazo?`${NUM.format(c.plazo)} días`:'—'}</td><td>${fmtDate(c.inicio)}</td><td>${fmtDate(c.final)}</td></tr>`).join(''):'<tr><td class="empty-row" colspan="9">Sin tramitaciones para los filtros seleccionados.</td></tr>';}
-async function loadDefaultContracts(){const status=document.getElementById('contractsFileStatus');status.textContent='Actualizando contratos desde Google Sheets…';try{const [contractsText,processText]=await Promise.all([loadText(sheetCsvUrl(SHEETS.contracts.gid)),loadText(sheetCsvUrl(SHEETS.process.gid))]);state.contracts=parseContractsCSV(contractsText);state.processContracts=parseProcessContractsCSV(processText);populateContractFilters();renderContracts();renderProcessContracts();document.getElementById('contractsBadge').textContent=state.contracts.length;document.getElementById('activeContractsCount').textContent=`(${state.contracts.length})`;document.getElementById('processContractsCount').textContent=`(${state.processContracts.length})`;status.textContent='Contratos actualizados desde Google Sheets';updateTimestamp(document.getElementById('contractsLastUpdate'));}catch(remoteError){console.warn('Google Sheets no disponible, se usa respaldo local:',remoteError);try{const b=await loadArrayBuffer(CONTRACTS_FILE);state.contracts=parseContracts(b).map(c=>({...c,localidad:normalizeLocality(c.localidad)}));state.processContracts=parseProcessContracts(b).map(c=>({...c,localidad:normalizeLocality(c.localidad)}));populateContractFilters();renderContracts();renderProcessContracts();document.getElementById('contractsBadge').textContent=state.contracts.length;document.getElementById('activeContractsCount').textContent=`(${state.contracts.length})`;document.getElementById('processContractsCount').textContent=`(${state.processContracts.length})`;if(status)status.textContent='Google Sheets no disponible · usando respaldo local';updateTimestamp(document.getElementById('contractsLastUpdate'));}catch(localError){status.textContent=`Error: ${remoteError.message}`;console.error(remoteError,localError);}}}
-
+async function loadDefaultContracts(){const status=document.getElementById('contractsFileStatus');status.textContent='Actualizando contratos desde Google Sheets…';try{const [contractsText,processText]=await Promise.all([loadText(sheetCsvUrl(SHEETS.contracts.gid)),loadText(sheetCsvUrl(SHEETS.process.gid))]);state.contracts=parseContractsCSV(contractsText);state.processContracts=parseProcessContractsCSV(processText);populateContractFilters();renderContracts();renderProcessContracts();document.getElementById('contractsBadge').textContent=state.contracts.length;document.getElementById('activeContractsCount').textContent=`(${state.contracts.length})`;document.getElementById('processContractsCount').textContent=`(${state.processContracts.length})`;status.textContent='Contratos actualizados desde Google Sheets';updateTimestamp(document.getElementById('contractsLastUpdate'));}catch(remoteError){console.warn('Google Sheets no disponible, se usa respaldo local:',remoteError);try{const b=await loadArrayBuffer(CONTRACTS_FILE);state.contracts=parseContracts(b).map(c=>({...c,localidad:normalizeLocality(c.localidad)}));state.processContracts=parseProcessContracts(b).map(c=>({...c,localidad:normalizeLocality(c.localidad)}));populateContractFilters();renderContracts();renderProcessContracts();document.getElementById('contractsBadge').textContent=state.contracts.length;document.getElementById('activeContractsCount').textContent=`(${state.contracts.length})`;document.getElementById('processContractsCount').textContent=`(${state.processContracts.length})`;status.textContent='Google Sheets no disponible · usando respaldo local';updateTimestamp(document.getElementById('contractsLastUpdate'));}catch(localError){status.textContent=`Error: ${remoteError.message}`;console.error(remoteError,localError);}}}
 
 // Eventos
 document.getElementById('reloadDefault').addEventListener('click',loadDefaultCollection);document.getElementById('cityFilter').addEventListener('change',renderCollection);document.getElementById('channelFilter').addEventListener('change',renderCollection);
