@@ -1,7 +1,7 @@
 (function(){
   setTimeout(function(){
     var core=document.createElement('script');
-    core.src='app-core.js?v=20261016-2';
+    core.src='app-core.js?v=20261016-3';
     core.onload=function(){
       if(typeof Chart!=='undefined'){
         var palette=['#1688f0','#26b576','#f5a623','#7b61ff','#47b8c4','#9aa9b5'];
@@ -23,7 +23,9 @@
             var ds=chart.data&&chart.data.datasets&&chart.data.datasets[0];
             var labels=chart.data&&chart.data.labels?chart.data.labels:[];
             if(!ds) return;
-            ds.backgroundColor=labels.map(function(label,i){return named[label]||palette[i%palette.length];});
+            if(!Array.isArray(ds.backgroundColor) || !ds.backgroundColor.length){
+              ds.backgroundColor=labels.map(function(label,i){return named[label]||palette[i%palette.length];});
+            }
             ds.hoverBackgroundColor=ds.backgroundColor;
             ds.borderColor='#ffffff';
             ds.borderWidth=3;
@@ -38,7 +40,7 @@
       }catch(e){console.warn('EPAS post-load refresh:',e);}
 
       var execution=document.createElement('script');
-      execution.src='execution.js?v=20261016-1';
+      execution.src='execution.js?v=20261016-2';
       execution.onerror=function(){console.error('No se pudo cargar execution.js');};
       document.body.appendChild(execution);
     };
