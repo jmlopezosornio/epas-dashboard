@@ -42,6 +42,14 @@
         setTimeout(function(){
           var css=document.querySelector('link[data-execution-css]');
           if(css) css.href='execution.css?v=20261016-3';
+          var layout=document.querySelector('link[data-execution-layout]');
+          if(!layout){
+            layout=document.createElement('link');
+            layout.rel='stylesheet';
+            layout.href='execution-layout-v4.css?v=20261016-1';
+            layout.dataset.executionLayout='1';
+            document.head.appendChild(layout);
+          }
         },50);
       };
       execution.onerror=function(){console.error('No se pudo cargar execution.js');};
