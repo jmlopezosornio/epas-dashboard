@@ -1,0 +1,132 @@
+/* Obras en ejecución · layout vertical v4
+   Estado actual arriba + listado completo debajo, sin barras internas */
+
+.execution-main-simplified{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:14px!important;
+  align-items:stretch!important;
+}
+
+.execution-status-panel{
+  order:1!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  padding:16px 18px!important;
+}
+
+.execution-table-panel{
+  order:2!important;
+  width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+
+/* Estado actual más amplio y legible */
+.execution-status-panel .panel-title{
+  margin-bottom:10px!important;
+}
+.execution-status-panel .panel-title h3{
+  font-size:18px!important;
+}
+.execution-status-panel .panel-title p{
+  font-size:12px!important;
+}
+.execution-status-layout{
+  display:grid!important;
+  grid-template-columns:minmax(300px,380px) minmax(0,1fr)!important;
+  gap:28px!important;
+  align-items:center!important;
+}
+.execution-status-chart{
+  height:320px!important;
+  min-height:320px!important;
+  position:relative!important;
+}
+.execution-status-legend{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:10px 16px!important;
+  align-content:center!important;
+}
+.execution-status-legend-row{
+  display:grid!important;
+  grid-template-columns:12px minmax(0,1fr) auto!important;
+  gap:9px!important;
+  align-items:center!important;
+  padding:10px 12px!important;
+  border:1px solid #e0eaf1!important;
+  border-radius:10px!important;
+  background:#f9fbfd!important;
+}
+.status-swatch{
+  width:10px!important;
+  height:10px!important;
+  border-radius:50%!important;
+}
+.status-copy strong{
+  display:block!important;
+  color:#173b56!important;
+  font-size:12px!important;
+  line-height:1.2!important;
+}
+.status-copy small{
+  display:block!important;
+  color:#7a91a2!important;
+  font-size:10.5px!important;
+  margin-top:2px!important;
+}
+.status-percent{
+  color:#31536b!important;
+  font-size:12px!important;
+  font-weight:800!important;
+  white-space:nowrap!important;
+}
+
+/* Tabla completa: sin scroll vertical ni horizontal interno */
+.execution-table-wrap{
+  max-height:none!important;
+  overflow:visible!important;
+  border-radius:0 0 12px 12px!important;
+}
+.execution-table{
+  width:100%!important;
+  min-width:0!important;
+  table-layout:fixed!important;
+}
+.execution-table th{
+  position:static!important;
+  white-space:normal!important;
+}
+.execution-table td{
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+.execution-table th:nth-child(1),.execution-table td:nth-child(1){width:24%!important}
+.execution-table th:nth-child(2),.execution-table td:nth-child(2){width:10%!important}
+.execution-table th:nth-child(3),.execution-table td:nth-child(3){width:14%!important}
+.execution-table th:nth-child(4),.execution-table td:nth-child(4){width:13%!important}
+.execution-table th:nth-child(5),.execution-table td:nth-child(5){width:7%!important}
+.execution-table th:nth-child(6),.execution-table td:nth-child(6){width:14%!important}
+.execution-table th:nth-child(7),.execution-table td:nth-child(7){width:18%!important}
+.execution-table .exec-name{max-width:none!important}
+.execution-status{max-width:none!important;width:auto!important}
+.execution-progress-cell{min-width:0!important}
+.execution-progress-line{grid-template-columns:minmax(48px,1fr) auto!important}
+
+/* Evitar que el contenido quede visualmente cortado */
+#executionView{overflow:visible!important}
+#tab-obras{overflow:visible!important}
+
+@media(max-width:1100px){
+  .execution-status-layout{grid-template-columns:1fr!important}
+  .execution-status-chart{height:300px!important}
+  .execution-status-legend{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .execution-table{table-layout:auto!important;min-width:980px!important}
+  .execution-table-wrap{overflow-x:auto!important}
+}
+
+@media(max-width:700px){
+  .execution-status-legend{grid-template-columns:1fr!important}
+  .execution-status-chart{height:270px!important}
+}
