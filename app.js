@@ -42,6 +42,7 @@
         setTimeout(function(){
           var css=document.querySelector('link[data-execution-css]');
           if(css) css.href='execution.css?v=20261016-3';
+
           var layout=document.querySelector('link[data-execution-layout]');
           if(!layout){
             layout=document.createElement('link');
@@ -49,6 +50,17 @@
             layout.href='execution-layout-v4.css?v=20261016-1';
             layout.dataset.executionLayout='1';
             document.head.appendChild(layout);
+          }
+
+          var compact=document.querySelector('link[data-execution-compact]');
+          if(!compact){
+            compact=document.createElement('link');
+            compact.rel='stylesheet';
+            compact.href='execution-compact.css?v=20261016-1';
+            compact.dataset.executionCompact='1';
+            document.head.appendChild(compact);
+          }else{
+            compact.href='execution-compact.css?v=20261016-1';
           }
         },50);
       };
