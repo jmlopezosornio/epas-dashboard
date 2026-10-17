@@ -1,0 +1,63 @@
+/* Obras en ejecución · EPAS */
+.works-mode-tabs{display:flex;gap:10px;align-items:center;margin:0 0 14px;padding:0 2px;flex-wrap:wrap}
+.works-mode-tab{appearance:none;border:1px solid #d4e2ec;background:#fff;color:#34546d;border-radius:999px;padding:10px 18px;font:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:.18s ease}
+.works-mode-tab:hover{border-color:#8fc9ef;color:#0d69ad}
+.works-mode-tab.active{background:#0b2f4d;color:#fff;border-color:#0b2f4d;box-shadow:0 4px 12px rgba(11,47,77,.14)}
+.works-mode-tab .mode-count{opacity:.78;font-weight:700}
+.execution-view{display:grid;gap:14px}
+.execution-view[hidden]{display:none!important}
+.execution-filters{display:grid;grid-template-columns:1fr 1fr 1fr 1.5fr;gap:12px;padding:14px}
+.execution-filter label{display:block;font-size:12px;font-weight:800;color:#314f67;margin:0 0 6px}
+.execution-filter select,.execution-filter input{width:100%;box-sizing:border-box;border:1px solid #d5e3ed;background:#fff;color:#1c394f;border-radius:10px;padding:11px 12px;font:inherit;font-size:13px;outline:none}
+.execution-filter select:focus,.execution-filter input:focus{border-color:#58aee9;box-shadow:0 0 0 3px rgba(60,159,225,.12)}
+.execution-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.execution-kpi{position:relative;overflow:hidden}
+.execution-kpi .execution-kpi-label{display:block;text-transform:none;letter-spacing:0;font-size:12px;color:#4f6a7e;font-weight:800}
+.execution-kpi strong{display:block;font-size:26px;color:#0d2b48;margin-top:5px;line-height:1.05}
+.execution-kpi small{color:#738a9b}
+.execution-kpi.progress-kpi strong{color:#19a565}
+.execution-kpi.critical-kpi strong{color:#d9534f}
+.execution-main{display:grid;grid-template-columns:minmax(0,2.15fr) minmax(330px,.95fr);gap:14px;align-items:start}
+.execution-table-panel{min-width:0}
+.execution-table-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.execution-table-title small{color:#71899b}
+.execution-table-wrap{overflow:auto;max-height:620px;border-radius:0 0 12px 12px}
+.execution-table{width:100%;border-collapse:collapse;min-width:980px;font-size:12px}
+.execution-table th{position:sticky;top:0;z-index:2;background:#eaf2f8;color:#294b63;padding:10px 11px;text-align:left;border-bottom:1px solid #d3e1eb;font-size:11px;letter-spacing:.01em}
+.execution-table td{padding:10px 11px;border-bottom:1px solid #e4edf3;color:#27445a;vertical-align:middle;background:#fff}
+.execution-table tr:hover td{background:#f8fbfd}
+.execution-table .exec-name{font-weight:700;color:#163a56;max-width:330px}
+.execution-table .exec-money{white-space:nowrap;font-weight:700}
+.execution-table .exec-plazo{white-space:nowrap}
+.execution-progress-cell{min-width:150px;position:relative}
+.execution-progress-line{display:grid;grid-template-columns:minmax(68px,1fr) auto;gap:8px;align-items:center}
+.execution-progress-track{height:10px;background:#e6edf2;border-radius:999px;overflow:hidden}
+.execution-progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#27b46f,#3ac37e)}
+.execution-progress-fill.warn{background:linear-gradient(90deg,#ffb33a,#ff9418)}
+.execution-progress-fill.low{background:linear-gradient(90deg,#ef5757,#ff7474)}
+.execution-progress-value{font-weight:800;color:#385a70;white-space:nowrap}
+.execution-status{display:inline-flex;align-items:center;max-width:260px;padding:7px 9px;border-radius:9px;font-weight:700;line-height:1.2;background:#eaf4fd;color:#1668a9}
+.execution-status.good{background:#e8f7ef;color:#168452}
+.execution-status.warn{background:#fff2d9;color:#a36a00}
+.execution-status.danger{background:#fde7e9;color:#c63742}
+.execution-status.neutral{background:#edf1f4;color:#586d7d}
+.execution-side{display:grid;gap:14px}
+.execution-chart-wrap{height:260px;position:relative}
+.execution-chart-wrap.tall{height:290px}
+.execution-highlight-list{display:grid;gap:8px}
+.execution-highlight{display:grid;grid-template-columns:30px minmax(0,1fr) 90px;gap:9px;align-items:center;padding:8px 0;border-bottom:1px solid #e6edf2}
+.execution-highlight:last-child{border-bottom:0}
+.execution-highlight .rank{width:26px;height:26px;border-radius:50%;background:#1688f0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
+.execution-highlight .work strong{display:block;color:#173b56;font-size:12px}
+.execution-highlight .work small{display:block;color:#7890a0;margin-top:2px}
+.execution-highlight .mini-bar{height:7px;background:#e6edf2;border-radius:999px;overflow:hidden}
+.execution-highlight .mini-bar span{display:block;height:100%;background:#2db573;border-radius:999px}
+.execution-empty{padding:38px 22px;text-align:center;color:#688297;background:#fff;border:1px dashed #cbdce8;border-radius:12px}
+.exec-tooltip{position:relative;cursor:help}
+.exec-tooltip::after{content:attr(data-tip);position:absolute;left:12px;bottom:calc(100% + 8px);min-width:220px;max-width:360px;background:#0d2b48;color:#fff;padding:9px 11px;border-radius:8px;font-size:11px;font-weight:500;line-height:1.35;box-shadow:0 7px 20px rgba(0,0,0,.18);opacity:0;visibility:hidden;transform:translateY(4px);transition:.16s ease;z-index:40;white-space:normal;pointer-events:none}
+.exec-tooltip::before{content:'';position:absolute;left:24px;bottom:calc(100% + 2px);border:6px solid transparent;border-top-color:#0d2b48;opacity:0;visibility:hidden;transition:.16s ease;z-index:41}
+.exec-tooltip:hover::after,.exec-tooltip:hover::before{opacity:1;visibility:visible;transform:translateY(0)}
+.works-plan-hidden{display:none!important}
+@media(max-width:1250px){.execution-kpis{grid-template-columns:repeat(3,1fr)}.execution-main{grid-template-columns:1fr}.execution-side{grid-template-columns:1fr 1fr}.execution-side .panel:last-child{grid-column:1/-1}}
+@media(max-width:800px){.execution-filters{grid-template-columns:1fr 1fr}.execution-kpis{grid-template-columns:1fr 1fr}.execution-side{grid-template-columns:1fr}.execution-side .panel:last-child{grid-column:auto}}
+@media(max-width:560px){.execution-filters{grid-template-columns:1fr}.execution-kpis{grid-template-columns:1fr}.works-mode-tabs{gap:7px}.works-mode-tab{width:100%}}
