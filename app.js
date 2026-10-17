@@ -36,6 +36,11 @@
           if(typeof refreshPlanMapView==='function') refreshPlanMapView();
         },180);
       }catch(e){console.warn('EPAS post-load refresh:',e);}
+
+      var execution=document.createElement('script');
+      execution.src='execution.js?v=20261016-1';
+      execution.onerror=function(){console.error('No se pudo cargar execution.js');};
+      document.body.appendChild(execution);
     };
     core.onerror=function(){console.error('No se pudo cargar app-core.js');};
     document.body.appendChild(core);
