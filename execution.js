@@ -16,6 +16,32 @@
   function title(v){try{return typeof toSmartTitleCase==='function'?toSmartTitleCase(v):String(v??'');}catch(e){return String(v??'');}}
   function locality(v){try{return typeof normalizeLocality==='function'?normalizeLocality(v):title(v);}catch(e){return title(v);}}
 
+  function statusCategory(value){
+    const s=norm(value);
+    if(!s)return'Sin estado';
+    if(s.includes('RESCIND'))return'Rescindida';
+    if(s.includes('SIN ADJUDICAR'))return'Sin adjudicar';
+    if(s.includes('FINALIZ'))return'Finalizada';
+    if(s.includes('PARALIZ'))return'Paralizada';
+    if(s.includes('SIN TRABAJOS'))return'Sin trabajos';
+    if(s.includes('EN EJECUCION')||s.includes('NORMAL'))return'En ejecución';
+    if(s.includes('REINICIO'))return'Reinicio / reanudada';
+    if(s.includes('DEBAJO')||s.includes('FALTA')||s.includes('ADICIONAL')||s.includes('APROBADO')||s.includes('COMODATO'))return'En seguimiento';
+    return'En seguimiento';
+  }
+
+  const STATUS_COLORS={
+    'En ejecución':'#1688f0',
+    'En seguimiento':'#f5a623',
+    'Reinicio / reanudada':'#7b61ff',
+    'Paralizada':'#e74c3c',
+    'Finalizada':'#26b576',
+    'Rescindida':'#c93c46',
+    'Sin adjudicar':'#9aa9b5',
+    'Sin trabajos':'#f07a54',
+    'Sin estado':'#c3ccd4'
+  };
+
   function parseMatrix(matrix){
     if(!Array.isArray(matrix)||!matrix.length)return[];
     let headerRow=-1;
@@ -45,7 +71,7 @@
       const montoRaw=idx.monto>=0?row[idx.monto]:'';
       const addRaw=idx.adicional>=0?row[idx.adicional]:'';
       const avanceRaw=idx.avance>=0?row[idx.avance]:'';
-      const item={
+      rows.push({
         nombre:title(nombre),
         localidad:locality(idx.localidad>=0?row[idx.localidad]:''),
         contratista:title(idx.contratista>=0?row[idx.contratista]:''),
@@ -59,13 +85,16 @@
         avanceRaw:String(avanceRaw??'').trim(),
         estado:idx.estado>=0?String(row[idx.estado]??'').replace(/\s+/g,' ').trim():'',
         obs:idx.obs>=0?String(row[idx.obs]??'').replace(/\s+/g,' ').trim():''
-      };
-      rows.push(item);
+      });
     }
     return rows;
   }
 
-  function addCss(){if(document.querySelector('link[data-execution-css]'))return;const l=document.createElement('link');l.rel='stylesheet';l.href='execution.css?v=20261016-1';l.dataset.executionCss='1';document.head.appendChild(l);}
+  function addCss(){
+    let l=document.querySelector('link[data-execution-css]');
+    if(l){l.href='execution.css?v=20261016-3';return;}
+    l=document.createElement('link');l.rel='stylesheet';l.href='execution.css?v=20261016-3';l.dataset.executionCss='1';document.head.appendChild(l);
+  }
 
   function buildUI(){
     const tab=document.getElementById('tab-obras');if(!tab||document.getElementById('worksModeTabs'))return;
@@ -90,16 +119,18 @@
         <article class="kpi-card execution-kpi"><span class="execution-kpi-label">Contratistas</span><strong id="execKpiContractors">0</strong><small>Empresas registradas</small></article>
         <article class="kpi-card execution-kpi critical-kpi"><span class="execution-kpi-label">Estados críticos</span><strong id="execKpiCritical">0</strong><small>Paralizadas, rescindidas o sin adjudicar</small></article>
       </section>
-      <section class="execution-main">
+      <section class="execution-main execution-main-simplified">
         <article class="panel execution-table-panel">
           <div class="panel-title execution-table-title"><div><h3>Detalle de obras en ejecución</h3><p>Información principal de seguimiento</p></div><small id="execTableCount"></small></div>
           <div class="execution-table-wrap"><table class="execution-table"><thead><tr><th>Nombre</th><th>Localidad</th><th>Contratista</th><th>Monto contratado</th><th>Plazo</th><th>Avance actual</th><th>Estado actual</th></tr></thead><tbody id="execBody"></tbody></table></div>
         </article>
-        <div class="execution-side">
-          <article class="panel"><div class="panel-title"><div><h3>Estado actual</h3><p>Distribución de obras por estado</p></div></div><div class="execution-chart-wrap"><canvas id="execStatusChart"></canvas></div></article>
-          <article class="panel"><div class="panel-title"><div><h3>Avance por obra</h3><p>Principales obras por mayor avance actual</p></div></div><div class="execution-chart-wrap tall"><canvas id="execAdvanceChart"></canvas></div></article>
-          <article class="panel"><div class="panel-title"><div><h3>Obras destacadas</h3><p>Mayores avances registrados</p></div></div><div id="execHighlights" class="execution-highlight-list"></div></article>
-        </div>
+        <aside class="panel execution-status-panel">
+          <div class="panel-title"><div><h3>Estado actual</h3><p>Distribución de las obras relevadas</p></div></div>
+          <div class="execution-status-layout">
+            <div class="execution-status-chart"><canvas id="execStatusChart"></canvas></div>
+            <div id="execStatusLegend" class="execution-status-legend"></div>
+          </div>
+        </aside>
       </section>`;
     tabs.insertAdjacentElement('afterend',view);
 
@@ -122,8 +153,7 @@
       if(!execState.loaded)loadExecution();else renderExecution();
     }else{
       exec.hidden=true;plan.forEach(x=>x.classList.remove('works-plan-hidden'));
-      const type=document.getElementById('planTypeFilter');
-      if(type){type.value=mode==='works'?'OBRA':'PROYECTO';}
+      const type=document.getElementById('planTypeFilter');if(type)type.value=mode==='works'?'OBRA':'PROYECTO';
       if(typeof state!=='undefined')state.planTableMode=mode==='works'?'OBRA':'PROYECTO';
       if(h)h.textContent=mode==='works'?'Obras a contratar':'Proyectos a contratar';
       if(p)p.textContent=mode==='works'?'Cartera de obras EPAS · programación de inversión 2026–2029':'Cartera de proyectos EPAS · programación de contratación 2026–2029';
@@ -140,20 +170,44 @@
     document.getElementById('execContractor').innerHTML='<option value="ALL">Todos</option>'+contractor.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
     document.getElementById('execStatus').innerHTML='<option value="ALL">Todos</option>'+status.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
   }
+
   function filtered(){
     const c=document.getElementById('execCity').value,s=document.getElementById('execStatus').value,k=document.getElementById('execContractor').value,q=norm(document.getElementById('execSearch').value);
     return execState.rows.filter(x=>(c==='ALL'||x.localidad===c)&&(s==='ALL'||x.estado===s)&&(k==='ALL'||x.contratista===k)&&(!q||norm(`${x.nombre} ${x.localidad} ${x.contratista} ${x.estado}`).includes(q)));
   }
+
   function destroy(name){try{if(typeof state!=='undefined'&&state.charts&&state.charts[name]){state.charts[name].destroy();state.charts[name]=null;}}catch(e){}}
-  function renderCharts(rows){
+
+  function renderStatus(rows){
     if(typeof Chart==='undefined'||typeof state==='undefined')return;
-    const groups=new Map();rows.forEach(x=>{const key=x.estado||'Sin estado';groups.set(key,(groups.get(key)||0)+1);});
-    const statusData=[...groups.entries()].sort((a,b)=>b[1]-a[1]).slice(0,7);
+    const groups=new Map();rows.forEach(x=>{const key=statusCategory(x.estado);groups.set(key,(groups.get(key)||0)+1);});
+    const statusData=[...groups.entries()].sort((a,b)=>b[1]-a[1]);
+    const total=rows.length;
+    const labels=statusData.map(x=>x[0]);
+    const values=statusData.map(x=>x[1]);
+    const colors=labels.map(x=>STATUS_COLORS[x]||'#9aa9b5');
+
+    const legend=document.getElementById('execStatusLegend');
+    if(legend){
+      legend.innerHTML=statusData.map(([name,count])=>{
+        const pct=total?count/total*100:0;
+        return `<div class="execution-status-legend-row"><span class="status-swatch" style="background:${STATUS_COLORS[name]||'#9aa9b5'}"></span><div class="status-copy"><strong>${esc(name)}</strong><small>${count} obra${count===1?'':'s'}</small></div><div class="status-percent">${new Intl.NumberFormat('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1}).format(pct)} %</div></div>`;
+      }).join('')||'<div class="execution-empty">Sin estados para mostrar.</div>';
+    }
+
     destroy('execStatusChart');
-    const sctx=document.getElementById('execStatusChart');if(sctx)state.charts.execStatusChart=new Chart(sctx,{type:'doughnut',data:{labels:statusData.map(x=>x[0]),datasets:[{data:statusData.map(x=>x[1]),backgroundColor:['#1688f0','#f5a623','#26b576','#e74c3c','#9aa9b5','#7b61ff','#47b8c4'],borderColor:'#fff',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{boxWidth:10,usePointStyle:true,font:{size:10}}}}}});
-    const top=[...rows].filter(x=>x.avance!=null).sort((a,b)=>b.avance-a.avance).slice(0,8);
-    destroy('execAdvanceChart');const actx=document.getElementById('execAdvanceChart');if(actx)state.charts.execAdvanceChart=new Chart(actx,{type:'bar',data:{labels:top.map(x=>`${x.localidad} · ${x.nombre}`),datasets:[{data:top.map(x=>x.avance),backgroundColor:'#61afe5',borderRadius:6,maxBarThickness:24}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtPct(c.raw)}}},scales:{x:{min:0,max:100,ticks:{callback:v=>v+' %'},grid:{display:true}},y:{grid:{display:false},ticks:{font:{size:9},callback:function(v){const l=this.getLabelForValue(v);return l.length>38?l.slice(0,38)+'…':l;}}}}}});
+    const ctx=document.getElementById('execStatusChart');if(!ctx)return;
+    const centerPlugin={
+      id:'executionCenterLabel',
+      afterDraw(chart){
+        const meta=chart.getDatasetMeta(0);if(!meta||!meta.data||!meta.data.length)return;
+        const {ctx}=chart;const x=meta.data[0].x,y=meta.data[0].y;
+        ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#0d2b48';ctx.font='800 30px Inter, system-ui, sans-serif';ctx.fillText(String(total),x,y-5);ctx.fillStyle='#6f8798';ctx.font='600 12px Inter, system-ui, sans-serif';ctx.fillText(total===1?'obra':'obras',x,y+20);ctx.restore();
+      }
+    };
+    state.charts.execStatusChart=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data:values,backgroundColor:colors,borderColor:'#fff',borderWidth:4,hoverOffset:4}]},plugins:[centerPlugin],options:{responsive:true,maintainAspectRatio:false,cutout:'66%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} (${total?new Intl.NumberFormat('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1}).format(c.raw/total*100):'0,0'} %)`}}}}});
   }
+
   function renderExecution(){
     if(!document.getElementById('executionView'))return;
     const rows=filtered();const amount=rows.reduce((s,x)=>s+x.monto,0);const progresses=rows.map(x=>x.avance).filter(v=>v!=null);const avg=progresses.length?progresses.reduce((a,b)=>a+b,0)/progresses.length:0;const contractors=new Set(rows.map(x=>x.contratista).filter(Boolean));
@@ -164,15 +218,14 @@
     document.getElementById('execKpiCritical').textContent=rows.filter(x=>isCritical(x.estado)).length;
     document.getElementById('execTableCount').textContent=`${rows.length} obra${rows.length===1?'':'s'}`;
     const body=document.getElementById('execBody');
-    if(!rows.length){body.innerHTML='<tr><td colspan="7"><div class="execution-empty">La hoja “Obras en ejecución” todavía no tiene registros disponibles en Google Sheets.</div></td></tr>';renderCharts([]);document.getElementById('execHighlights').innerHTML='<div class="execution-empty">Sin datos para mostrar.</div>';return;}
+    if(!rows.length){body.innerHTML='<tr><td colspan="7"><div class="execution-empty">Sin registros para los filtros seleccionados.</div></td></tr>';renderStatus([]);return;}
     body.innerHTML=rows.map(x=>{
       const obraTip=[x.ampliacion?`Ampliación de plazo: ${x.ampliacion} días`:'',x.adicionalRaw?`Monto adicional: ${x.adicional?money(x.adicional):esc(x.adicionalRaw)}`:''].filter(Boolean).join(' · ')||'Sin ampliación de plazo ni monto adicional informado';
       const obsTip=x.obs||'Sin observaciones informadas';
       const pct=x.avance==null?0:x.avance;
       return `<tr><td class="exec-name exec-tooltip" data-tip="${esc(obraTip)}">${esc(x.nombre)}</td><td>${esc(x.localidad)}</td><td>${esc(x.contratista||'—')}</td><td class="exec-money">${x.monto?money(x.monto):'—'}</td><td class="exec-plazo">${esc(x.plazo||'—')}${x.plazo&&!/DIA|MES/i.test(x.plazo)?' días':''}</td><td class="execution-progress-cell exec-tooltip" data-tip="${esc(obsTip)}"><div class="execution-progress-line"><div class="execution-progress-track"><div class="execution-progress-fill ${progressClass(pct)}" style="width:${pct}%"></div></div><span class="execution-progress-value">${fmtPct(x.avance)}</span></div></td><td><span class="execution-status ${statusClass(x.estado)}">${esc(x.estado||'Sin estado')}</span></td></tr>`;
     }).join('');
-    renderCharts(rows);
-    const hi=[...rows].filter(x=>x.avance!=null).sort((a,b)=>b.avance-a.avance).slice(0,5);document.getElementById('execHighlights').innerHTML=hi.map((x,i)=>`<div class="execution-highlight"><span class="rank">${i+1}</span><div class="work"><strong>${esc(x.nombre)}</strong><small>${esc(x.localidad)} · ${esc(x.contratista||'—')}</small></div><div><div class="mini-bar"><span style="width:${x.avance}%"></span></div><small>${fmtPct(x.avance)}</small></div></div>`).join('')||'<div class="execution-empty">Sin avances registrados.</div>';
+    renderStatus(rows);
   }
 
   async function loadExecution(){
@@ -181,8 +234,15 @@
       execState.rows=parseMatrix(matrix);execState.loaded=true;fillFilters();renderExecution();document.getElementById('execTabCount').textContent=`(${execState.rows.length})`;
     }catch(err){console.error('Obras en ejecución:',err);execState.rows=[];execState.loaded=true;fillFilters();renderExecution();}
   }
+
   function syncPlanCounts(){try{document.getElementById('worksPlanCount').textContent=`(${state.works.length})`;document.getElementById('projectsPlanCount').textContent=`(${state.projects.length})`;}catch(e){}}
 
-  function init(){addCss();buildUI();syncPlanCounts();switchMode('execution');setTimeout(syncPlanCounts,1200);}
+  function improveUserAvatar(){
+    const avatar=document.querySelector('.user-avatar');
+    if(!avatar||avatar.querySelector('svg'))return;
+    avatar.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 20c.7-4 3.2-6 7.5-6s6.8 2 7.5 6"></path></svg>';
+  }
+
+  function init(){addCss();buildUI();improveUserAvatar();syncPlanCounts();switchMode('execution');setTimeout(syncPlanCounts,1200);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,0));else setTimeout(init,0);
 })();
