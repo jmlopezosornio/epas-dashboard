@@ -1,0 +1,89 @@
+/* Obras en ejecución · layout vertical compacto */
+.execution-main-simplified{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:12px!important;
+  align-items:stretch!important;
+}
+.execution-status-panel{
+  order:1;
+  min-height:0!important;
+  padding:13px 16px 14px!important;
+}
+.execution-table-panel{
+  order:2;
+  width:100%!important;
+  min-width:0!important;
+}
+.execution-status-panel .panel-title{margin-bottom:8px!important}
+.execution-status-layout{
+  display:grid!important;
+  grid-template-columns:minmax(230px,300px) minmax(0,1fr)!important;
+  grid-template-rows:auto!important;
+  gap:18px!important;
+  align-items:center!important;
+}
+.execution-status-chart{
+  height:220px!important;
+  min-height:0!important;
+  position:relative;
+}
+.execution-status-legend{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:6px 10px!important;
+  border-top:0!important;
+  padding-top:0!important;
+}
+.execution-status-legend-row{
+  min-height:42px;
+  grid-template-columns:10px minmax(0,1fr) auto!important;
+  gap:8px!important;
+  padding:6px 8px!important;
+  border:1px solid #e4edf3!important;
+  border-radius:8px;
+  background:#fbfdfe;
+}
+.status-copy strong{font-size:10.5px!important}
+.status-copy small{font-size:9px!important}
+.status-percent{font-size:10.5px!important}
+
+.execution-table-wrap{
+  overflow:visible!important;
+  max-height:none!important;
+  border-radius:0 0 12px 12px;
+}
+.execution-table{
+  width:100%!important;
+  min-width:0!important;
+  table-layout:fixed!important;
+  font-size:10.5px!important;
+}
+.execution-table th,
+.execution-table td{
+  box-sizing:border-box;
+  overflow-wrap:anywhere;
+}
+.execution-table th{padding:8px 8px!important}
+.execution-table td{padding:7px 8px!important}
+.execution-table th:nth-child(1),.execution-table td:nth-child(1){width:25%}
+.execution-table th:nth-child(2),.execution-table td:nth-child(2){width:9%}
+.execution-table th:nth-child(3),.execution-table td:nth-child(3){width:13%}
+.execution-table th:nth-child(4),.execution-table td:nth-child(4){width:12%}
+.execution-table th:nth-child(5),.execution-table td:nth-child(5){width:7%}
+.execution-table th:nth-child(6),.execution-table td:nth-child(6){width:14%}
+.execution-table th:nth-child(7),.execution-table td:nth-child(7){width:20%}
+.execution-table .exec-name{max-width:none!important}
+.execution-progress-cell{min-width:0!important}
+.execution-status{max-width:none!important;white-space:normal!important}
+
+@media(max-width:1000px){
+  .execution-status-layout{grid-template-columns:1fr!important}
+  .execution-status-chart{height:240px!important}
+  .execution-status-legend{grid-template-columns:1fr 1fr!important}
+  .execution-table-wrap{overflow-x:auto!important}
+  .execution-table{min-width:920px!important;table-layout:auto!important}
+}
+@media(max-width:700px){
+  .execution-status-legend{grid-template-columns:1fr!important}
+}
