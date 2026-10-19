@@ -7,20 +7,22 @@
     const out=[];
     for(let r=2;r<(matrix||[]).length;r++){
       const row=matrix[r]||[];
-      const contrato=cleanText(row[0]);
-      const expediente=cleanText(row[1]);
+      const localidad=cleanText(row[0]);
+      const contrato=cleanText(row[1]);
+      const expediente=cleanText(row[2]);
+      if(!localidad&&!contrato&&!expediente) continue;
       if(!contrato&&!expediente) continue;
-      const inicio=excelDateToJS(row[5]);
-      const fin=excelDateToJS(row[6]);
-      const note=cleanText(row[7]);
+      const inicio=excelDateToJS(row[6]);
+      const fin=excelDateToJS(row[7]);
+      const note=cleanText(row[8]);
       const textEnd=parseDateFromText(note);
       out.push({
-        localidad:'—',
+        localidad:normalizeLocality(localidad||'Sin localidad'),
         contrato:toSmartTitleCase(contrato),
         expediente,
-        adjudicado:numeric(row[2]),
-        empresa:cleanText(row[3])||'—',
-        plazo:numeric(row[4]),
+        adjudicado:numeric(row[3]),
+        empresa:cleanText(row[4])||'—',
+        plazo:numeric(row[5]),
         inicio,
         final:fin,
         finalEfectiva:textEnd||fin,
