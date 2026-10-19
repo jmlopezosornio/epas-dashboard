@@ -37,7 +37,7 @@
       }catch(e){console.warn('EPAS post-load refresh:',e);}
 
       var contracts=document.createElement('script');
-      contracts.src='contracts-source-v2.js?v=20261019-1';
+      contracts.src='contracts-source-v2.js?v=20261019-2';
       contracts.onerror=function(){console.error('No se pudo cargar contracts-source-v2.js');};
       document.body.appendChild(contracts);
 
