@@ -36,6 +36,11 @@
         setTimeout(function(){if(typeof refreshPlanMapView==='function') refreshPlanMapView();},180);
       }catch(e){console.warn('EPAS post-load refresh:',e);}
 
+      var contracts=document.createElement('script');
+      contracts.src='contracts-source-v2.js?v=20261019-1';
+      contracts.onerror=function(){console.error('No se pudo cargar contracts-source-v2.js');};
+      document.body.appendChild(contracts);
+
       var execution=document.createElement('script');
       execution.src='execution.js?v=20261016-4';
       execution.onload=function(){
