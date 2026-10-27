@@ -40,11 +40,11 @@
       if(!stickyTables){
         stickyTables=document.createElement('link');
         stickyTables.rel='stylesheet';
-        stickyTables.href='sticky-tables.css?v=20261027-1';
+        stickyTables.href='sticky-tables.css?v=20261027-2';
         stickyTables.dataset.stickyTables='1';
         document.head.appendChild(stickyTables);
       }else{
-        stickyTables.href='sticky-tables.css?v=20261027-1';
+        stickyTables.href='sticky-tables.css?v=20261027-2';
       }
 
       var planV2=document.createElement('script');
