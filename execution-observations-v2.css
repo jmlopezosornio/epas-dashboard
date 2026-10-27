@@ -1,0 +1,7 @@
+/* Tooltip de observaciones de avance: cronologia por punto y coma */
+#execBody .execution-progress-cell.exec-tooltip::after{
+  white-space:pre-line!important;
+  min-width:280px;
+  max-width:460px;
+  line-height:1.5;
+}
