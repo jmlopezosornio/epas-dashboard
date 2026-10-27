@@ -36,6 +36,17 @@
         setTimeout(function(){if(typeof refreshPlanMapView==='function') refreshPlanMapView();},180);
       }catch(e){console.warn('EPAS post-load refresh:',e);}
 
+      var stickyTables=document.querySelector('link[data-sticky-tables]');
+      if(!stickyTables){
+        stickyTables=document.createElement('link');
+        stickyTables.rel='stylesheet';
+        stickyTables.href='sticky-tables.css?v=20261027-1';
+        stickyTables.dataset.stickyTables='1';
+        document.head.appendChild(stickyTables);
+      }else{
+        stickyTables.href='sticky-tables.css?v=20261027-1';
+      }
+
       var planV2=document.createElement('script');
       planV2.src='plan-table-v2.js?v=20261021-1';
       planV2.onerror=function(){console.error('No se pudo cargar plan-table-v2.js');};
