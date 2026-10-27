@@ -1,0 +1,37 @@
+/* EPAS · Encabezados fijos para tablas extensas */
+@media (min-width:1201px){
+  /* Evita que el contenedor horizontal se convierta en el ancestro de scroll vertical. */
+  #contract-view-vigentes .table-scroll,
+  #contract-view-proceso .table-scroll,
+  #tab-compras .purchase-table-wrap{
+    overflow:visible!important;
+  }
+
+  #contract-view-vigentes .contracts-table thead th,
+  #contract-view-proceso .process-table thead th{
+    position:sticky!important;
+    top:64px!important;
+    z-index:26!important;
+    background:#f4f7f9!important;
+    box-shadow:0 2px 5px rgba(11,41,66,.12);
+  }
+
+  #tab-compras .purchase-table thead th{
+    position:sticky!important;
+    top:64px!important;
+    z-index:26!important;
+    background:#edf4f8!important;
+    box-shadow:0 2px 5px rgba(11,41,66,.12);
+  }
+}
+
+/* En resoluciones menores se conserva el scroll horizontal existente. */
+@media (max-width:1200px){
+  #contract-view-vigentes .contracts-table thead th,
+  #contract-view-proceso .process-table thead th,
+  #tab-compras .purchase-table thead th{
+    position:sticky!important;
+    top:0!important;
+    z-index:6!important;
+  }
+}
