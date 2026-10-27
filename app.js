@@ -88,6 +88,22 @@
           }else{
             compact.href='execution-compact.css?v=20261027-1';
           }
+
+          var obsCss=document.querySelector('link[data-execution-observations]');
+          if(!obsCss){
+            obsCss=document.createElement('link');
+            obsCss.rel='stylesheet';
+            obsCss.href='execution-observations-v2.css?v=20261027-1';
+            obsCss.dataset.executionObservations='1';
+            document.head.appendChild(obsCss);
+          }else{
+            obsCss.href='execution-observations-v2.css?v=20261027-1';
+          }
+
+          var obsScript=document.createElement('script');
+          obsScript.src='execution-observations-v2.js?v=20261027-1';
+          obsScript.onerror=function(){console.error('No se pudo cargar execution-observations-v2.js');};
+          document.body.appendChild(obsScript);
         },50);
       };
       execution.onerror=function(){console.error('No se pudo cargar execution.js');};
