@@ -71,11 +71,11 @@
           if(!compact){
             compact=document.createElement('link');
             compact.rel='stylesheet';
-            compact.href='execution-compact.css?v=20261016-1';
+            compact.href='execution-compact.css?v=20261027-1';
             compact.dataset.executionCompact='1';
             document.head.appendChild(compact);
           }else{
-            compact.href='execution-compact.css?v=20261016-1';
+            compact.href='execution-compact.css?v=20261027-1';
           }
         },50);
       };
