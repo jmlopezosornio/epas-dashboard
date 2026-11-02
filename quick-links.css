@@ -1,0 +1,15 @@
+/* EPAS · cinta lateral de accesos rápidos */
+.epas-quicklinks{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:55;display:flex;align-items:center;font-family:inherit}
+.epas-quicklinks-toggle{width:44px;min-height:120px;border:0;border-radius:14px 0 0 14px;background:linear-gradient(180deg,#0d4f8d,#0b2f57);color:#fff;box-shadow:0 8px 24px rgba(11,41,66,.22);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 6px;writing-mode:vertical-rl;transform:rotate(180deg);font-weight:800;font-size:12px;letter-spacing:.01em}
+.epas-quicklinks-toggle svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform:rotate(180deg)}
+.epas-quicklinks-panel{width:310px;margin-right:-310px;opacity:0;pointer-events:none;transition:.22s ease;background:#fff;border:1px solid #dce7ef;border-right:0;border-radius:14px 0 0 14px;box-shadow:0 12px 30px rgba(11,41,66,.18);overflow:hidden}
+.epas-quicklinks.open .epas-quicklinks-panel{margin-right:0;opacity:1;pointer-events:auto}
+.epas-quicklinks-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;background:#f4f8fb;border-bottom:1px solid #e1eaf0}
+.epas-quicklinks-panel-head strong{color:#0d2b48;font-size:14px}.epas-quicklinks-close{border:0;background:transparent;color:#5c7487;font-size:20px;cursor:pointer;line-height:1;padding:2px 4px}
+.epas-quicklinks-list{display:grid;gap:8px;padding:12px}
+.epas-quicklink{display:flex;align-items:flex-start;gap:10px;text-decoration:none;border:1px solid #e0e9ef;border-radius:10px;padding:10px 11px;background:#fff;color:#17384f;transition:.15s ease}
+.epas-quicklink:hover{background:#f4f9fc;border-color:#bcd7e8;transform:translateX(-2px)}
+.epas-quicklink-icon{width:32px;height:32px;border-radius:9px;background:#e7f3fc;color:#1688f0;display:grid;place-items:center;flex:0 0 auto}
+.epas-quicklink-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.epas-quicklink-copy strong{display:block;font-size:12px;line-height:1.25;color:#143550}.epas-quicklink-copy small{display:block;margin-top:3px;color:#7890a0;font-size:10px}
+@media(max-width:760px){.epas-quicklinks{top:auto;bottom:18px;transform:none}.epas-quicklinks-toggle{min-height:auto;height:44px;width:44px;border-radius:14px 0 0 14px;writing-mode:horizontal-tb;transform:none;font-size:0}.epas-quicklinks-toggle svg{transform:none}.epas-quicklinks-panel{width:min(300px,calc(100vw - 56px));margin-right:calc(-1 * min(300px,calc(100vw - 56px)))} }
