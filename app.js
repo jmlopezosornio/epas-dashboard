@@ -47,6 +47,11 @@
         stickyTables.href='sticky-tables.css?v=20261027-2';
       }
 
+      var quickLinks=document.createElement('script');
+      quickLinks.src='quick-links.js?v=20261102-1';
+      quickLinks.onerror=function(){console.error('No se pudo cargar quick-links.js');};
+      document.body.appendChild(quickLinks);
+
       var planV2=document.createElement('script');
       planV2.src='plan-table-v2.js?v=20261021-1';
       planV2.onerror=function(){console.error('No se pudo cargar plan-table-v2.js');};
