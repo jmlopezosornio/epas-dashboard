@@ -109,6 +109,7 @@
     [...body.querySelectorAll('tr')].forEach(enhanceRow);
   }
 
+
   function currentPlanMode(){
     try{
       if(typeof state!=='undefined' && state.planTableMode) return state.planTableMode;
@@ -117,73 +118,162 @@
     return active?.dataset?.planTable || 'OBRA';
   }
 
-  function syncPrintButton(){
-    const btn=document.getElementById('printPlanWorks');
+  function syncPdfButton(){
+    const btn=document.getElementById('exportPlanPdf');
     if(!btn) return;
     btn.style.display=currentPlanMode()==='OBRA'?'inline-flex':'none';
   }
 
-  function ensurePrintButton(){
+  function ensurePdfButton(){
     const toolbar=document.querySelector('.plan-table-toolbar');
-    if(!toolbar || document.getElementById('printPlanWorks')) return;
+    if(!toolbar || document.getElementById('exportPlanPdf')) return;
+
+    const oldPrint=document.getElementById('printPlanWorks');
+    if(oldPrint) oldPrint.remove();
+
     const exportBtn=document.getElementById('exportPlanCsv');
     const btn=document.createElement('button');
-    btn.id='printPlanWorks';
+    btn.id='exportPlanPdf';
     btn.className='button secondary';
     btn.type='button';
-    btn.innerHTML='🖨 Imprimir';
-    btn.title='Imprimir el listado visible de Obras a contratar';
-    btn.addEventListener('click',printVisibleWorks);
+    btn.innerHTML='▣ Exportar PDF';
+    btn.title='Generar PDF del listado visible de Obras a contratar';
+    btn.addEventListener('click',exportVisibleWorksPdf);
     if(exportBtn) exportBtn.insertAdjacentElement('beforebegin',btn); else toolbar.appendChild(btn);
-    syncPrintButton();
+    syncPdfButton();
   }
 
-  function printVisibleWorks(){
-    if(currentPlanMode()!=='OBRA') return;
+  function loadScriptOnce(src,test){
+    return new Promise((resolve,reject)=>{
+      if(test()) return resolve();
+      const existing=[...document.scripts].find(x=>x.src===src);
+      if(existing){existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true});return;}
+      const el=document.createElement('script');
+      el.src=src;el.onload=resolve;el.onerror=()=>reject(new Error('No se pudo cargar '+src));
+      document.head.appendChild(el);
+    });
+  }
+
+  async function ensurePdfLibs(){
+    await loadScriptOnce('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',()=>!!window.jspdf?.jsPDF);
+    await loadScriptOnce('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js',()=>!!window.jspdf?.jsPDF?.API?.autoTable);
+  }
+
+  function visiblePlanRowsForPdf(){
     const table=document.querySelector('.plan-table');
-    if(!table) return;
-    const clone=table.cloneNode(true);
-    clone.querySelectorAll('[title]').forEach(el=>el.removeAttribute('title'));
-
-    const city=document.getElementById('planCityFilter')?.selectedOptions?.[0]?.textContent?.trim()||'Todas';
-    const system=document.getElementById('planSystemFilter')?.selectedOptions?.[0]?.textContent?.trim()||'Todos';
-    const year=document.getElementById('planYearFilter')?.selectedOptions?.[0]?.textContent?.trim()||'Todos';
-    const exp=document.getElementById('planExpFilter')?.selectedOptions?.[0]?.textContent?.trim()||'Todos';
-    const search=document.getElementById('planSearch')?.value?.trim()||'—';
-    const count=document.getElementById('planWorksTabCount')?.textContent?.replace(/[()]/g,'').trim()||'';
-
-    const w=window.open('','_blank','width=1400,height=900');
-    if(!w) return;
-    const generated=new Date().toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'});
-    w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>EPAS - Obras a contratar</title>
-      <style>
-        @page{size:A4 landscape;margin:10mm}
-        *{box-sizing:border-box}
-        body{font-family:Arial,Helvetica,sans-serif;color:#17384f;margin:0}
-        .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0b4f85;padding-bottom:8px;margin-bottom:10px}
-        h1{font-size:20px;margin:0;color:#0d2b48}
-        .sub{font-size:11px;color:#61798b;margin-top:3px}
-        .meta{font-size:10px;color:#526b7d;text-align:right}
-        .filters{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;margin:0 0 10px;padding:7px 9px;background:#f2f6f9;border:1px solid #d9e4ec;border-radius:6px}
-        .filters b{color:#0d2b48}
-        table{width:100%;border-collapse:collapse;font-size:9px;table-layout:auto}
-        thead{display:table-header-group}
-        th{background:#eaf2f8;color:#284a63;text-align:left;padding:6px 7px;border:1px solid #cfdde7;font-size:8px;text-transform:uppercase}
-        td{padding:6px 7px;border:1px solid #dde6ed;vertical-align:top}
-        tr{page-break-inside:avoid}
-        .numeric{text-align:right;white-space:nowrap}
-        .plan-investment-value{white-space:nowrap;text-decoration:none}
-        .plan-licitacion-cell{white-space:nowrap}
-        .foot{margin-top:8px;font-size:9px;color:#7a8c99;text-align:right}
-      </style></head><body>
-      <div class="head"><div><h1>EPAS · Obras a contratar</h1><div class="sub">Listado según filtros aplicados</div></div><div class="meta">Registros: ${count||clone.tBodies[0]?.rows.length||0}<br>Generado: ${generated}</div></div>
-      <div class="filters"><span><b>Localidad:</b> ${city}</span><span><b>Sistema:</b> ${system}</span><span><b>Año:</b> ${year}</span><span><b>Expediente:</b> ${exp}</span><span><b>Buscar:</b> ${search}</span></div>
-      ${clone.outerHTML}
-      <div class="foot">EPAS · Tablero de gestión</div>
-      <script>window.onload=function(){setTimeout(function(){window.print();},250)}<\/script>
-      </body></html>`);
-    w.document.close();
+    if(!table) return {headers:[],rows:[]};
+    const headers=[...table.querySelectorAll('thead th')].map(th=>th.textContent.replace(/\s+/g,' ').trim());
+    const rows=[...table.querySelectorAll('tbody tr')].map(tr=>[...tr.children].map(td=>td.textContent.replace(/\s+/g,' ').trim()));
+    return {headers,rows};
   }
+
+  async function exportVisibleWorksPdf(){
+    if(currentPlanMode()!=='OBRA') return;
+    const btn=document.getElementById('exportPlanPdf');
+    const old=btn?.innerHTML;
+    try{
+      if(btn){btn.disabled=true;btn.innerHTML='Generando PDF…';}
+      await ensurePdfLibs();
+      const {jsPDF}=window.jspdf;
+      const {headers,rows}=visiblePlanRowsForPdf();
+      if(!rows.length) return;
+
+      const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a3',compress:true});
+      const pageW=doc.internal.pageSize.getWidth();
+      const pageH=doc.internal.pageSize.getHeight();
+
+      const navy=[11,47,87], blue=[23,111,155], cyan=[52,169,201], line=[218,228,235];
+      const city=document.getElementById('planCityFilter')?.selectedOptions?.[0]?.textContent?.trim()||'Todas';
+      const system=document.getElementById('planSystemFilter')?.selectedOptions?.[0]?.textContent?.trim()||'Todos';
+      const year=document.getElementById('planYearFilter')?.selectedOptions?.[0]?.textContent?.trim()||'Todos';
+      const exp=document.getElementById('planExpFilter')?.selectedOptions?.[0]?.textContent?.trim()||'Todos';
+      const search=document.getElementById('planSearch')?.value?.trim()||'—';
+      const generated=new Date().toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'});
+      const logo=document.querySelector('.brand-logo-real')?.src||'';
+
+      function drawHeader(data){
+        doc.setFillColor(...navy);
+        doc.rect(0,0,pageW,24,'F');
+        if(logo && /^data:image\//.test(logo)){
+          try{doc.addImage(logo,'PNG',10,4.2,40,15.5,undefined,'FAST');}catch(e){}
+        }
+        doc.setTextColor(255,255,255);
+        doc.setFont('helvetica','bold');doc.setFontSize(16);
+        doc.text('Obras a contratar',58,10.5);
+        doc.setFont('helvetica','normal');doc.setFontSize(9.5);
+        doc.text('EPAS · Planificación de infraestructura',58,16.5);
+
+        doc.setTextColor(45,70,90);
+        doc.setFillColor(244,248,251);
+        doc.roundedRect(10,29,pageW-20,17,2,2,'F');
+        doc.setFontSize(8.5);
+        const filters=[
+          ['Localidad',city],['Sistema',system],['Año',year],['Expediente',exp],['Buscar',search]
+        ];
+        let x=14;
+        filters.forEach(([k,v])=>{
+          doc.setFont('helvetica','bold');doc.text(k+':',x,36);
+          doc.setFont('helvetica','normal');
+          const val=String(v||'—');
+          doc.text(val.substring(0,34),x,41);
+          x+=78;
+        });
+        doc.setFontSize(8);
+        doc.setTextColor(100,120,135);
+        doc.text('Generado: '+generated,pageW-12,10,{align:'right'});
+        doc.text('Registros: '+rows.length,pageW-12,16,{align:'right'});
+      }
+
+      const colWidths=[26,92,22,31,21,31,34,72,28];
+      doc.autoTable({
+        head:[headers],
+        body:rows,
+        startY:51,
+        margin:{top:51,left:10,right:10,bottom:14},
+        styles:{
+          font:'helvetica',fontSize:7.8,textColor:[31,55,73],
+          cellPadding:{top:2.8,right:2.5,bottom:2.8,left:2.5},
+          lineColor:line,lineWidth:.18,valign:'middle',overflow:'linebreak'
+        },
+        headStyles:{
+          fillColor:[234,242,248],textColor:[41,75,99],
+          fontStyle:'bold',fontSize:7.5,lineColor:[205,220,230],lineWidth:.25
+        },
+        alternateRowStyles:{fillColor:[249,251,253]},
+        columnStyles:{
+          0:{cellWidth:colWidths[0],fontStyle:'bold'},
+          1:{cellWidth:colWidths[1]},
+          2:{cellWidth:colWidths[2]},
+          3:{cellWidth:colWidths[3],halign:'right'},
+          4:{cellWidth:colWidths[4]},
+          5:{cellWidth:colWidths[5]},
+          6:{cellWidth:colWidths[6],halign:'right'},
+          7:{cellWidth:colWidths[7],fontSize:7.2},
+          8:{cellWidth:colWidths[8],halign:'center'}
+        },
+        didDrawPage:(data)=>{
+          drawHeader(data);
+          const page=doc.internal.getNumberOfPages();
+          doc.setDrawColor(...line);doc.line(10,pageH-10,pageW-10,pageH-10);
+          doc.setFontSize(7.5);doc.setTextColor(110,130,145);
+          doc.text('EPAS · Tablero de gestión',10,pageH-5.5);
+          doc.text('Página '+page,pageW-10,pageH-5.5,{align:'right'});
+        }
+      });
+
+      const filename='EPAS_Obras_a_contratar_'+new Date().toISOString().slice(0,10)+'.pdf';
+      doc.save(filename);
+    }catch(err){
+      console.error('PDF Obras a contratar:',err);
+      alert('No se pudo generar el PDF. Probá nuevamente.');
+    }finally{
+      if(btn){btn.disabled=false;btn.innerHTML=old||'▣ Exportar PDF';}
+    }
+  }
+
+  document.addEventListener('click',function(ev){
+    if(ev.target.closest('.plan-data-tab')||ev.target.closest('.works-mode-tab')) setTimeout(syncPdfButton,30);
+  });
 
   function observe(){
     const body=document.getElementById('planDetailBody');
@@ -191,8 +281,8 @@
     const obs=new MutationObserver(()=>requestAnimationFrame(enhancePlanTable));
     obs.observe(body,{childList:true,subtree:false});
     enhancePlanTable();
-    ensurePrintButton();
-    syncPrintButton();
+    ensurePdfButton();
+    syncPdfButton();
   }
 
   document.addEventListener('click',function(ev){
@@ -208,7 +298,7 @@
   document.head.appendChild(style);
 
   observe();
-  ensurePrintButton();
-  syncPrintButton();
+  ensurePdfButton();
+  syncPdfButton();
   loadDates();
 })();
