@@ -53,7 +53,7 @@
       document.body.appendChild(quickLinks);
 
       var planV2=document.createElement('script');
-      planV2.src='plan-table-v2.js?v=20261104-1';
+      planV2.src='plan-table-v2.js?v=20261104-2';
       planV2.onerror=function(){console.error('No se pudo cargar plan-table-v2.js');};
       document.body.appendChild(planV2);
 
