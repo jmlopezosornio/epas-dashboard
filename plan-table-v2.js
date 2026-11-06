@@ -121,7 +121,10 @@
   function syncPdfButton(){
     const btn=document.getElementById('exportPlanPdf');
     if(!btn) return;
-    btn.style.display=currentPlanMode()==='OBRA'?'inline-flex':'none';
+    const mode=currentPlanMode();
+    const isProject=mode==='PROYECTO';
+    btn.style.display=(mode==='OBRA'||isProject)?'inline-flex':'none';
+    btn.title=isProject?'Generar PDF del listado visible de Proyectos a contratar':'Generar PDF del listado visible de Obras a contratar';
   }
 
   function ensurePdfButton(){
@@ -137,8 +140,8 @@
     btn.className='button secondary';
     btn.type='button';
     btn.innerHTML='▣ Exportar PDF';
-    btn.title='Generar PDF del listado visible de Obras a contratar';
-    btn.addEventListener('click',exportVisibleWorksPdf);
+    btn.title='Generar PDF del listado visible';
+    btn.addEventListener('click',exportVisiblePlanPdf);
     if(exportBtn) exportBtn.insertAdjacentElement('beforebegin',btn); else toolbar.appendChild(btn);
     syncPdfButton();
   }
@@ -167,8 +170,12 @@
     return {headers,rows};
   }
 
-  async function exportVisibleWorksPdf(){
-    if(currentPlanMode()!=='OBRA') return;
+  async function exportVisiblePlanPdf(){
+    const mode=currentPlanMode();
+    if(mode!=='OBRA'&&mode!=='PROYECTO') return;
+    const isProject=mode==='PROYECTO';
+    const reportTitle=isProject?'Proyectos a contratar':'Obras a contratar';
+    const reportSlug=isProject?'Proyectos_a_contratar':'Obras_a_contratar';
     const btn=document.getElementById('exportPlanPdf');
     const old=btn?.innerHTML;
     try{
@@ -199,7 +206,7 @@
         }
         doc.setTextColor(255,255,255);
         doc.setFont('helvetica','bold');doc.setFontSize(16);
-        doc.text('Obras a contratar',58,10.5);
+        doc.text(reportTitle,58,10.5);
         doc.setFont('helvetica','normal');doc.setFontSize(9.5);
         doc.text('EPAS · Planificación de infraestructura',58,16.5);
 
@@ -220,8 +227,7 @@
         });
         doc.setFontSize(8);
         doc.setTextColor(100,120,135);
-        doc.text('Generado: '+generated,pageW-12,10,{align:'right'});
-        doc.text('Registros: '+rows.length,pageW-12,16,{align:'right'});
+        doc.text('Registros: '+rows.length,pageW-12,13,{align:'right'});
       }
 
       const colWidths=[26,92,22,31,21,31,34,72,28];
@@ -261,10 +267,22 @@
         }
       });
 
-      const filename='EPAS_Obras_a_contratar_'+new Date().toISOString().slice(0,10)+'.pdf';
+      let finalY=(doc.lastAutoTable&&doc.lastAutoTable.finalY)||51;
+      if(finalY>pageH-20){
+        doc.addPage();
+        finalY=18;
+      }
+      doc.setDrawColor(...line);
+      doc.line(10,finalY+4,pageW-10,finalY+4);
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(85,105,120);
+      doc.text('Fecha y hora de impresión: '+generated,10,finalY+10);
+
+      const filename='EPAS_'+reportSlug+'_'+new Date().toISOString().slice(0,10)+'.pdf';
       doc.save(filename);
     }catch(err){
-      console.error('PDF Obras a contratar:',err);
+      console.error('PDF '+reportTitle+':',err);
       alert('No se pudo generar el PDF. Probá nuevamente.');
     }finally{
       if(btn){btn.disabled=false;btn.innerHTML=old||'▣ Exportar PDF';}
@@ -284,10 +302,6 @@
     ensurePdfButton();
     syncPdfButton();
   }
-
-  document.addEventListener('click',function(ev){
-    if(ev.target.closest('.plan-data-tab')||ev.target.closest('.works-mode-tab')) setTimeout(syncPrintButton,30);
-  });
 
   const style=document.createElement('style');
   style.textContent=`
