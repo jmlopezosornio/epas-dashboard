@@ -53,7 +53,7 @@
       document.body.appendChild(quickLinks);
 
       var planV2=document.createElement('script');
-      planV2.src='plan-table-v2.js?v=20261104-2';
+      planV2.src='plan-table-v2.js?v=20261106-4';
       planV2.onerror=function(){console.error('No se pudo cargar plan-table-v2.js');};
       document.body.appendChild(planV2);
 
@@ -68,11 +68,11 @@
       document.body.appendChild(purchases);
 
       var execution=document.createElement('script');
-      execution.src='execution.js?v=20261016-4';
+      execution.src='execution.js?v=20261106-1';
       execution.onload=function(){
         setTimeout(function(){
           var css=document.querySelector('link[data-execution-css]');
-          if(css) css.href='execution.css?v=20261016-3';
+          if(css) css.href='execution.css?v=20261106-1';
 
           var layout=document.querySelector('link[data-execution-layout]');
           if(!layout){
