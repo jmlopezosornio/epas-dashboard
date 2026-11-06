@@ -1,7 +1,7 @@
 (function(){
   setTimeout(function(){
     var core=document.createElement('script');
-    core.src='app-core.js?v=20261106-1';
+    core.src='app-core.js?v=20261106-2';
     core.onload=function(){
       if(typeof Chart!=='undefined'){
         var palette=['#1688f0','#26b576','#f5a623','#7b61ff','#47b8c4','#9aa9b5'];
