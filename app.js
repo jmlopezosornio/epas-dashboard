@@ -62,6 +62,11 @@
       contracts.onerror=function(){console.error('No se pudo cargar contracts-source-v2.js');};
       document.body.appendChild(contracts);
 
+      var contractsPdf=document.createElement('script');
+      contractsPdf.src='contracts-pdf.js?v=20261106-1';
+      contractsPdf.onerror=function(){console.error('No se pudo cargar contracts-pdf.js');};
+      document.body.appendChild(contractsPdf);
+
       var purchases=document.createElement('script');
       purchases.src='purchases.js?v=20261022-1';
       purchases.onerror=function(){console.error('No se pudo cargar purchases.js');};
