@@ -154,6 +154,12 @@
       if(!execState.loaded)loadExecution();else renderExecution();
     }else{
       exec.hidden=true;plan.forEach(x=>x.classList.remove('works-plan-hidden'));
+      const planKpis=document.querySelector('#tab-obras .plan-kpis');
+      const workKpi=document.querySelector('#tab-obras .kpi-work');
+      const projectKpi=document.querySelector('#tab-obras .kpi-project');
+      if(workKpi)workKpi.style.display=mode==='works'?'':'none';
+      if(projectKpi)projectKpi.style.display=mode==='projects'?'':'none';
+      if(planKpis)planKpis.classList.add('single-mode');
       const type=document.getElementById('planTypeFilter');if(type)type.value=mode==='works'?'OBRA':'PROYECTO';
       if(typeof state!=='undefined')state.planTableMode=mode==='works'?'OBRA':'PROYECTO';
       if(h)h.textContent=mode==='works'?'Obras a contratar':'Proyectos a contratar';
