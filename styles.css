@@ -109,7 +109,7 @@ footer { text-align:center; padding:0 20px 34px; color:#82909b; font-size:12px; 
 .contract-view.active { display:block; }
 .contracts-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(320px,.75fr); gap:18px; margin-bottom:18px; }
 .contracts-grid > .panel { padding:18px; min-width:0; }
-.contracts-table { min-width:1450px; }
+.contracts-table { width:100%; min-width:0; table-layout:fixed; }
 .process-table { min-width:1150px; }
 .contracts-table td,.contracts-table th,.process-table td,.process-table th { vertical-align:top; }
 .contract-name { font-weight:700; min-width:235px; }
@@ -294,4 +294,25 @@ body{background:#f4f8fb;color:#122b40}
 }
 @media(max-width:800px){
   .plan-real-map{min-height:430px}
+}
+
+/* Contratos vigentes · ajuste sin scroll horizontal */
+@media (min-width:1201px){
+  #contract-view-vigentes .table-scroll{overflow:visible!important}
+  #contract-view-vigentes .contracts-table th,
+  #contract-view-vigentes .contracts-table td{white-space:normal;overflow-wrap:anywhere}
+  #contract-view-vigentes .contracts-table th:nth-child(1){width:7%}
+  #contract-view-vigentes .contracts-table th:nth-child(2){width:18%}
+  #contract-view-vigentes .contracts-table th:nth-child(3){width:13%}
+  #contract-view-vigentes .contracts-table th:nth-child(4){width:9%}
+  #contract-view-vigentes .contracts-table th:nth-child(5){width:8%}
+  #contract-view-vigentes .contracts-table th:nth-child(6){width:6%}
+  #contract-view-vigentes .contracts-table th:nth-child(7){width:8%}
+  #contract-view-vigentes .contracts-table th:nth-child(8){width:8%}
+  #contract-view-vigentes .contracts-table th:nth-child(9){width:11%}
+  #contract-view-vigentes .contracts-table th:nth-child(10){width:12%}
+  #contract-view-vigentes .contract-name{min-width:0}
+}
+@media (max-width:1200px){
+  .contracts-table{min-width:1120px;table-layout:auto}
 }
