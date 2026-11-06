@@ -325,3 +325,8 @@ body{background:#f4f8fb;color:#122b40}
 .contract-report-actions .button{white-space:nowrap}
 .contract-report-actions .table-total{white-space:nowrap}
 @media(max-width:800px){.contract-report-actions{gap:7px;flex-wrap:wrap;justify-content:flex-end}}
+
+/* KPIs específicos por vista de Obras/Proyectos */
+.plan-kpis.single-mode{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:1200px){.plan-kpis.single-mode{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.plan-kpis.single-mode{grid-template-columns:1fr}}
