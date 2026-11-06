@@ -73,7 +73,7 @@
       document.body.appendChild(purchases);
 
       var execution=document.createElement('script');
-      execution.src='execution.js?v=20261106-1';
+      execution.src='execution.js?v=20261106-2';
       execution.onload=function(){
         setTimeout(function(){
           var css=document.querySelector('link[data-execution-css]');
