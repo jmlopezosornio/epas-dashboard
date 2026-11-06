@@ -89,7 +89,7 @@ async function loadDefaultCollection(){const status=document.getElementById('fil
 
 // Plan de Obras y Proyectos
 function normalizePlanSystem(v){const s=cleanText(v);if(!s)return'—';const k=s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); const map={'CLOACA':'Cloaca','CLOACAL':'Cloaca','SANEAMIENTO':'Cloaca','DESAGUES CLOACALES':'Cloaca','AGUA':'Agua','AGUA POTABLE':'Agua','OTROS':'Otros','OTRO':'Otros','MIXTO':'Mixto'}; return map[k] || toSmartTitleCase(s);}
-function parsePlanRow(row,type){const localidad=normalizeLocality(row[0]),denominacion=toSmartTitleCase(row[1]),sistema=normalizePlanSystem(row[2]);if(!localidad||localidad==='Sin localidad'||!denominacion)return null;return{type,localidad,denominacion,sistema,presupuesto:numeric(row[3]),plazo:cleanText(row[4])||'—',anio:cleanText(row[5])||'—',inv2027:numeric(row[6]),inv2028:numeric(row[7]),inv2029:numeric(row[8]),expediente:cleanText(row[9])||'Sin expediente'};}
+function parsePlanRow(row,type){const localidad=normalizeLocality(row[0]),denominacion=toSmartTitleCase(row[1]),sistema=normalizePlanSystem(row[2]);if(!localidad||localidad==='Sin localidad'||!denominacion)return null;return{type,localidad,denominacion,sistema,presupuesto:numeric(row[3]),plazo:cleanText(row[4])||'—',anio:cleanText(row[5])||'—',inv2027:numeric(row[6]),inv2028:numeric(row[7]),inv2029:numeric(row[8]),expediente:cleanText(row[9])||'Sin expediente',fechaLicitacion:cleanText(row[10])||''};}
 function parsePlanMatrix(matrix){const works=[],projects=[];let mode=null;for(let r=0;r<matrix.length;r++){const first=cleanText(matrix[r]?.[0]).toUpperCase();if(first==='OBRAS A EJECUTAR'){mode='WAIT_WORK_HEADER';continue;}if(first==='PROYECTOS A CONTRATAR'){mode='WAIT_PROJECT_HEADER';continue;}if(mode==='WAIT_WORK_HEADER'){if(first==='LOCALIDAD')mode='WORKS';continue;}if(mode==='WAIT_PROJECT_HEADER'){if(first==='LOCALIDAD')mode='PROJECTS';continue;}if(mode==='WORKS'){if(!first||first.includes('TOTAL'))continue;const item=parsePlanRow(matrix[r],'OBRA');if(item)works.push(item);}else if(mode==='PROJECTS'){if(!first||first.startsWith('SUBTOTALES')||first.startsWith('TOTALES'))continue;const item=parsePlanRow(matrix[r],'PROYECTO');if(item)projects.push(item);}}return{works,projects};}
 function parsePlanCSV(text){return parsePlanMatrix(parseCSV(text));}
 function parsePlanXlsx(buffer){const wb=XLSX.read(buffer,{type:'array',cellDates:true}),ws=wb.Sheets[wb.SheetNames[0]],matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});return parsePlanMatrix(matrix);}
@@ -99,7 +99,32 @@ function populatePlanFilters(){const rows=planAll(),city=document.getElementById
 function filteredPlanRows(){const city=document.getElementById('planCityFilter').value,type=document.getElementById('planTypeFilter').value,sys=document.getElementById('planSystemFilter').value,year=document.getElementById('planYearFilter').value,exp=document.getElementById('planExpFilter').value,q=cleanText(document.getElementById('planSearch').value).toLowerCase();return planAll().filter(x=>(city==='ALL'||x.localidad===city)&&(type==='ALL'||x.type===type)&&(sys==='ALL'||x.sistema===sys)&&(year==='ALL'||x.anio.includes(year))&&(exp==='ALL'||(exp==='CON'?hasExpediente(x):!hasExpediente(x)))&&(!q||`${x.localidad} ${x.denominacion} ${x.expediente}`.toLowerCase().includes(q)));}
 function aggregatePlan(rows,key,valueKey='presupuesto'){const m=new Map();rows.forEach(x=>m.set(x[key],(m.get(x[key])||0)+numeric(x[valueKey])));return[...m.entries()].map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);}
 function createPlanDoughnut(name,canvasId,labels,data){destroyChart(name);const el=document.getElementById(canvasId);if(!el)return;state.charts[name]=new Chart(el,{type:'doughnut',data:{labels,datasets:[{data,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{boxWidth:10,usePointStyle:true,font:{size:10}}}}}});}
-function renderPlanCharts(rows){const byCity=aggregatePlan(rows,'localidad').slice(0,6);createBar('planCityBudgetChart','planCityBudgetChart',byCity.map(x=>x.name),byCity.map(x=>x.value),true);destroyChart('planInvestmentChart');state.charts.planInvestmentChart=new Chart(document.getElementById('planInvestmentChart'),{type:'bar',data:{labels:['2027','2028','2029'],datasets:[{data:[rows.reduce((s,x)=>s+x.inv2027,0),rows.reduce((s,x)=>s+x.inv2028,0),rows.reduce((s,x)=>s+x.inv2029,0)],borderRadius:7,maxBarThickness:58}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtMoney(c.raw)}}},scales:{y:{ticks:{callback:v=>fmtCompactMoney(v)}}}}});const works=rows.filter(x=>x.type==='OBRA'),projects=rows.filter(x=>x.type==='PROYECTO');createPlanDoughnut('planTypeChart','planTypeChart',['Obras','Proyectos a contratar'],[works.length,projects.length]);const sysCount=new Map();works.forEach(x=>sysCount.set(x.sistema,(sysCount.get(x.sistema)||0)+1));createPlanDoughnut('planSystemChart','planSystemChart',[...sysCount.keys()],[...sysCount.values()]);const con=works.filter(hasExpediente).length,sin=works.length-con;document.getElementById('planExpSummary').innerHTML=`<div class="exp-box good"><strong>${con}</strong><span>Con expediente</span><small>${works.length?PCT.format(con/works.length*100):'0,0'} % de obras</small></div><div class="exp-box pending"><strong>${sin}</strong><span>Sin expediente</span><small>${works.length?PCT.format(sin/works.length*100):'0,0'} % de obras</small></div>`;}
+function hasFechaLicitacion(x){const s=cleanText(x.fechaLicitacion);return !!s&&s!=='—'&&s!=='-'&&s!=='0';}
+function planSystemLabel(v){return v==='Agua'?'Agua Potable':v==='Cloaca'?'Saneamiento':v;}
+function renderPlanCharts(rows){
+  const byCity=aggregatePlan(rows,'localidad').slice(0,6);
+  createBar('planCityBudgetChart','planCityBudgetChart',byCity.map(x=>x.name),byCity.map(x=>x.value),true);
+
+  destroyChart('planInvestmentChart');
+  state.charts.planInvestmentChart=new Chart(document.getElementById('planInvestmentChart'),{
+    type:'bar',
+    data:{labels:['2027','2028','2029'],datasets:[{data:[rows.reduce((s,x)=>s+x.inv2027,0),rows.reduce((s,x)=>s+x.inv2028,0),rows.reduce((s,x)=>s+x.inv2029,0)],borderRadius:7,maxBarThickness:58}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtMoney(c.raw)}}},scales:{y:{ticks:{callback:v=>fmtCompactMoney(v)}}}}
+  });
+
+  const works=rows.filter(x=>x.type==='OBRA');
+  const licRows=rows;
+  const conFecha=licRows.filter(hasFechaLicitacion).length;
+  const sinFecha=licRows.length-conFecha;
+  createPlanDoughnut('planTypeChart','planTypeChart',['Con fecha','Sin fecha'],[conFecha,sinFecha]);
+
+  const sysCount=new Map();
+  works.forEach(x=>{const label=planSystemLabel(x.sistema);sysCount.set(label,(sysCount.get(label)||0)+1);});
+  createPlanDoughnut('planSystemChart','planSystemChart',[...sysCount.keys()],[...sysCount.values()]);
+
+  const con=works.filter(hasExpediente).length,sin=works.length-con;
+  document.getElementById('planExpSummary').innerHTML=`<div class="exp-box good"><strong>${con}</strong><span>Con expediente</span><small>${works.length?PCT.format(con/works.length*100):'0,0'} % de obras</small></div><div class="exp-box pending"><strong>${sin}</strong><span>Sin expediente</span><small>${works.length?PCT.format(sin/works.length*100):'0,0'} % de obras</small></div>`;
+}
 const PLAN_COORDS={
 'NEUQUEN':[-38.9516,-68.0591],'PICUN LEUFU':[-39.5238,-69.2797],'PLOTTIER':[-38.9667,-68.2333],'TRICAO MALAL':[-37.0455,-70.3350],'VARVARCO':[-36.8568,-70.6806],'CHOS MALAL':[-37.3781,-70.2709],'LAS OVEJAS':[-36.9895,-70.7498],'VILLA LA ANGOSTURA':[-40.7618,-71.6463],'SAN MARTIN DE LOS ANDES':[-40.1572,-71.3524],'ANELO':[-38.3546,-68.7884],'JUNIN DE LOS ANDES':[-39.9504,-71.0694],'EL ALAMITO':[-37.2465,-70.3930],'EL CHOLAR':[-37.4428,-70.6436],'OCTAVIO PICO':[-37.5865,-68.2686],'TAQUIMILAN':[-37.5175,-70.2488],'LOS MENUCOS':[-37.13388,-70.40535],'VILLA TRAFUL':[-40.6550,-71.4078],'EL CHOCON':[-39.2594,-68.7795]};
 function mapKey(v){return cleanText(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\./g,'').replace(/\s+/g,' ').trim();}
@@ -188,19 +213,25 @@ function renderPlanMap(rows){
   rows.forEach(x=>{
     const key=mapKey(x.localidad),coords=PLAN_COORDS[key];
     if(!coords) return;
-    if(!groups.has(key)) groups.set(key,{key,name:x.localidad,coords,works:0,projects:0});
+    if(!groups.has(key)) groups.set(key,{key,name:x.localidad,coords,agua:0,saneamiento:0,otros:0});
     const g=groups.get(key);
-    x.type==='OBRA' ? g.works++ : g.projects++;
+    if(x.sistema==='Agua') g.agua++;
+    else if(x.sistema==='Cloaca') g.saneamiento++;
+    else if(x.sistema==='Mixto'){g.agua++;g.saneamiento++;}
+    else g.otros++;
   });
 
   const data=[...groups.values()].sort(
-    (a,b)=>(b.works+b.projects)-(a.works+a.projects)||a.name.localeCompare(b.name,'es')
+    (a,b)=>(b.agua+b.saneamiento+b.otros)-(a.agua+a.saneamiento+a.otros)||a.name.localeCompare(b.name,'es')
   );
 
   const list=document.getElementById('planLocationList');
+  const title=document.getElementById('planLocationTitle');
+  const onlyProjects=rows.length&&rows.every(x=>x.type==='PROYECTO');
+  if(title) title.textContent=onlyProjects?'Localidades con proyectos':'Localidades con obras';
   if(list){
     list.innerHTML=data.length
-      ? data.map(g=>`<button class="plan-location-item" data-plan-locality="${escapeHtml(g.key)}"><span>${escapeHtml(g.name)}</span><strong>${g.works+g.projects}</strong></button>`).join('')
+      ? data.map(g=>`<button class="plan-location-item" data-plan-locality="${escapeHtml(g.key)}"><span>${escapeHtml(g.name)}</span><strong>${g.agua+g.saneamiento+g.otros}</strong></button>`).join('')
       : '<div class="map-empty">Sin localidades georreferenciadas.</div>';
   }
 
@@ -209,13 +240,11 @@ function renderPlanMap(rows){
 
   initPlanMap();
   if(!state.planMap || !state.planLayer) return;
-
   state.planLayer.clearLayers();
 
   data.forEach(g=>{
-    const total=g.works+g.projects;
-    const cls=g.works&&g.projects?'both':g.projects?'project':'work';
-
+    const total=g.agua+g.saneamiento+g.otros;
+    const cls=g.agua&&g.saneamiento?'both':g.agua?'water':g.saneamiento?'sanitation':'other';
     const icon=L.divIcon({
       className:'plan-div-icon',
       html:`<div class="plan-map-marker ${cls}">${total}</div>`,
@@ -223,9 +252,14 @@ function renderPlanMap(rows){
       iconAnchor:[17,17]
     });
 
+    const parts=[];
+    if(g.agua) parts.push(`Agua Potable: ${g.agua}`);
+    if(g.saneamiento) parts.push(`Saneamiento: ${g.saneamiento}`);
+    if(g.otros) parts.push(`Otros: ${g.otros}`);
+
     L.marker(g.coords,{icon,keyboard:false})
       .bindTooltip(
-        `<strong>${escapeHtml(g.name)}</strong><br>Obras: ${g.works} · Proyectos: ${g.projects}`,
+        `<strong>${escapeHtml(g.name)}</strong><br>${parts.join(' · ')}`,
         {direction:'top',offset:[0,-13],opacity:.96}
       )
       .on('click',()=>{
@@ -245,10 +279,8 @@ function renderPlanMap(rows){
       });
     });
   }
-
   setTimeout(()=>refreshPlanMapView(),100);
 }
-
 function renderPlanTable(rows){const tableRows=rows.filter(x=>x.type===state.planTableMode),body=document.getElementById('planDetailBody');document.getElementById('planWorksTabCount').textContent=`(${rows.filter(x=>x.type==='OBRA').length})`;document.getElementById('planProjectsTabCount').textContent=`(${rows.filter(x=>x.type==='PROYECTO').length})`;body.innerHTML=tableRows.length?tableRows.map(x=>`<tr><td>${escapeHtml(x.localidad)}</td><td class="work-name">${escapeHtml(x.denominacion)}</td><td><span class="system-pill">${escapeHtml(x.sistema)}</span></td><td class="numeric">${fmtMoney(x.presupuesto)}</td><td>${escapeHtml(x.plazo)}</td><td>${escapeHtml(x.anio)}</td><td class="numeric">${x.inv2027?fmtMoney(x.inv2027):'—'}</td><td class="numeric">${x.inv2028?fmtMoney(x.inv2028):'—'}</td><td class="numeric">${x.inv2029?fmtMoney(x.inv2029):'—'}</td><td class="exp-cell ${hasExpediente(x)?'':'no-exp'}">${hasExpediente(x)?escapeHtml(x.expediente):'Sin expediente'}</td></tr>`).join(''):'<tr><td class="empty-row" colspan="10">Sin registros para los filtros seleccionados.</td></tr>';}
 function renderPlan(){const rows=filteredPlanRows(),works=rows.filter(x=>x.type==='OBRA'),projects=rows.filter(x=>x.type==='PROYECTO'),cities=new Set(rows.map(x=>x.localidad));document.getElementById('kpiPlanWorks').textContent=NUM.format(works.length);document.getElementById('kpiPlanProjects').textContent=NUM.format(projects.length);document.getElementById('kpiPlanCities').textContent=NUM.format(cities.size);document.getElementById('kpiPlanBudget').textContent=fmtCompactMoney(rows.reduce((s,x)=>s+x.presupuesto,0));document.getElementById('kpiPlan2027').textContent=fmtCompactMoney(rows.reduce((s,x)=>s+x.inv2027,0));document.getElementById('worksBadge').textContent=works.length+projects.length;renderPlanCharts(rows);renderPlanMap(rows);renderPlanTable(rows);}
 async function loadDefaultWorks(){
