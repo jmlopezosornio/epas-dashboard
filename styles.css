@@ -320,3 +320,8 @@ body{background:#f4f8fb;color:#122b40}
 /* Toolbar de tabla de Obras/Proyectos: sin subpestañas duplicadas */
 .plan-table-toolbar-actions{justify-content:flex-end}
 .plan-table-toolbar-actions .button{margin-left:8px}
+
+.contract-report-actions{display:flex;align-items:center;gap:12px;margin-left:auto}
+.contract-report-actions .button{white-space:nowrap}
+.contract-report-actions .table-total{white-space:nowrap}
+@media(max-width:800px){.contract-report-actions{gap:7px;flex-wrap:wrap;justify-content:flex-end}}
