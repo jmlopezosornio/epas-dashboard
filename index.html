@@ -94,10 +94,10 @@ body{background:#f4f8fb!important;color:#122b40!important}
         <article class="panel plan-map-panel">
           <div class="panel-title"><div><h3>Mapa de obras y proyectos por localidad</h3><p>Distribución territorial · Provincia del Neuquén</p></div></div>
           <div class="plan-map-layout">
-            <aside class="plan-location-box"><h4>Localidades (obras + proyectos)</h4><div id="planLocationList" class="plan-location-list"></div></aside>
+            <aside class="plan-location-box"><h4 id="planLocationTitle">Localidades con obras</h4><div id="planLocationList" class="plan-location-list"></div></aside>
             <div class="plan-map-area real-province-map">
               <div id="planMap" class="plan-real-map" aria-label="Mapa georreferenciado de la Provincia del Neuquén"></div>
-              <div class="plan-map-legend"><span><i class="legend-work"></i>Obras</span><span><i class="legend-project"></i>Proyectos</span><span><i class="legend-both"></i>Ambos</span></div>
+              <div class="plan-map-legend"><span><i class="legend-water"></i>Agua Potable</span><span><i class="legend-sanitation"></i>Saneamiento</span><span><i class="legend-both"></i>Ambas</span></div>
             </div>
           </div>
         </article>
@@ -108,7 +108,7 @@ body{background:#f4f8fb!important;color:#122b40!important}
             <article class="panel chart-panel"><div class="panel-title"><div><h3>Inversión programada</h3><p>En miles de millones de $</p></div></div><div class="chart-wrap plan-chart"><canvas id="planInvestmentChart"></canvas></div></article>
           </div>
           <div class="plan-mini-charts">
-            <article class="panel chart-panel"><div class="panel-title"><h3>Obras vs. Proyectos</h3></div><div class="chart-wrap mini-plan-chart"><canvas id="planTypeChart"></canvas></div></article>
+            <article class="panel chart-panel"><div class="panel-title"><h3>Fecha de licitación</h3></div><div class="chart-wrap mini-plan-chart"><canvas id="planTypeChart"></canvas></div></article>
             <article class="panel chart-panel"><div class="panel-title"><h3>Obras por sistema</h3></div><div class="chart-wrap mini-plan-chart"><canvas id="planSystemChart"></canvas></div></article>
             <article class="panel expediente-card"><div class="panel-title"><h3>Estado de expediente (Obras)</h3></div><div id="planExpSummary" class="exp-summary"></div></article>
           </div>
