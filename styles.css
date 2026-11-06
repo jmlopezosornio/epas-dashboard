@@ -316,3 +316,7 @@ body{background:#f4f8fb;color:#122b40}
 @media (max-width:1200px){
   .contracts-table{min-width:1120px;table-layout:auto}
 }
+
+/* Toolbar de tabla de Obras/Proyectos: sin subpestañas duplicadas */
+.plan-table-toolbar-actions{justify-content:flex-end}
+.plan-table-toolbar-actions .button{margin-left:8px}
