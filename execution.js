@@ -121,7 +121,7 @@
       </section>
       <section class="execution-main execution-main-simplified">
         <article class="panel execution-table-panel">
-          <div class="panel-title execution-table-title"><div><h3>Detalle de obras en ejecución</h3><p>Información principal de seguimiento</p></div><small id="execTableCount"></small></div>
+          <div class="panel-title execution-table-title"><div><h3>Detalle de obras en ejecución</h3><p>Información principal de seguimiento</p></div><div class="execution-table-actions"><button id="exportExecutionPdf" class="button secondary" type="button">▣ Exportar PDF</button><small id="execTableCount"></small></div></div>
           <div class="execution-table-wrap"><table class="execution-table"><thead><tr><th>Nombre</th><th>Localidad</th><th>Contratista</th><th>Monto contratado</th><th>Plazo</th><th>Avance actual</th><th>Estado actual</th></tr></thead><tbody id="execBody"></tbody></table></div>
         </article>
         <aside class="panel execution-status-panel">
@@ -138,6 +138,7 @@
     tabs.querySelectorAll('[data-works-mode]').forEach(btn=>btn.addEventListener('click',()=>switchMode(btn.dataset.worksMode)));
     ['execCity','execStatus','execContractor'].forEach(id=>document.getElementById(id).addEventListener('change',renderExecution));
     document.getElementById('execSearch').addEventListener('input',renderExecution);
+    document.getElementById('exportExecutionPdf')?.addEventListener('click',exportExecutionPdf);
   }
 
   function planSections(){const tab=document.getElementById('tab-obras');return [tab.querySelector('.plan-filters'),tab.querySelector('.plan-kpis'),tab.querySelector('.plan-main-grid'),tab.querySelector('.plan-table-panel')].filter(Boolean);}
@@ -174,6 +175,138 @@
   function filtered(){
     const c=document.getElementById('execCity').value,s=document.getElementById('execStatus').value,k=document.getElementById('execContractor').value,q=norm(document.getElementById('execSearch').value);
     return execState.rows.filter(x=>(c==='ALL'||x.localidad===c)&&(s==='ALL'||x.estado===s)&&(k==='ALL'||x.contratista===k)&&(!q||norm(`${x.nombre} ${x.localidad} ${x.contratista} ${x.estado}`).includes(q)));
+  }
+
+
+  function loadPdfScriptOnce(src,test){
+    return new Promise((resolve,reject)=>{
+      if(test()) return resolve();
+      const existing=[...document.scripts].find(x=>x.src===src);
+      if(existing){existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true});return;}
+      const el=document.createElement('script');
+      el.src=src;el.onload=resolve;el.onerror=()=>reject(new Error('No se pudo cargar '+src));
+      document.head.appendChild(el);
+    });
+  }
+
+  async function ensureExecutionPdfLibs(){
+    await loadPdfScriptOnce('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',()=>!!window.jspdf?.jsPDF);
+    await loadPdfScriptOnce('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js',()=>!!window.jspdf?.jsPDF?.API?.autoTable);
+  }
+
+  async function exportExecutionPdf(){
+    const btn=document.getElementById('exportExecutionPdf');
+    const old=btn?.innerHTML;
+    try{
+      const rows=filtered();
+      if(!rows.length) return;
+      if(btn){btn.disabled=true;btn.innerHTML='Generando PDF…';}
+      await ensureExecutionPdfLibs();
+
+      const {jsPDF}=window.jspdf;
+      const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a3',compress:true});
+      const pageW=doc.internal.pageSize.getWidth();
+      const pageH=doc.internal.pageSize.getHeight();
+      const navy=[11,47,87], line=[218,228,235];
+      const generated=new Date().toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'});
+      const logo=document.querySelector('.brand-logo-real')?.src||'';
+
+      const city=document.getElementById('execCity')?.selectedOptions?.[0]?.textContent?.trim()||'Todas';
+      const status=document.getElementById('execStatus')?.selectedOptions?.[0]?.textContent?.trim()||'Todos';
+      const contractor=document.getElementById('execContractor')?.selectedOptions?.[0]?.textContent?.trim()||'Todos';
+      const search=document.getElementById('execSearch')?.value?.trim()||'—';
+
+      const body=rows.map(x=>[
+        x.nombre||'—',
+        x.localidad||'—',
+        x.contratista||'—',
+        x.monto?money(x.monto):'—',
+        x.plazo||'—',
+        fmtPct(x.avance),
+        x.estado||'Sin estado'
+      ]);
+
+      function drawHeader(){
+        doc.setFillColor(...navy);
+        doc.rect(0,0,pageW,24,'F');
+        if(logo && /^data:image\//.test(logo)){
+          try{doc.addImage(logo,'PNG',10,4.2,40,15.5,undefined,'FAST');}catch(e){}
+        }
+        doc.setTextColor(255,255,255);
+        doc.setFont('helvetica','bold');doc.setFontSize(16);
+        doc.text('Obras en ejecución',58,10.5);
+        doc.setFont('helvetica','normal');doc.setFontSize(9.5);
+        doc.text('EPAS · Seguimiento de obras y avance actualizado',58,16.5);
+
+        doc.setTextColor(45,70,90);
+        doc.setFillColor(244,248,251);
+        doc.roundedRect(10,29,pageW-20,17,2,2,'F');
+        doc.setFontSize(8.5);
+        const filters=[['Localidad',city],['Estado',status],['Contratista',contractor],['Buscar',search]];
+        let x=14;
+        filters.forEach(([k,v],idx)=>{
+          doc.setFont('helvetica','bold');doc.text(k+':',x,36);
+          doc.setFont('helvetica','normal');doc.text(String(v||'—').substring(0,42),x,41);
+          x+=idx===2?100:88;
+        });
+        doc.setFontSize(8);
+        doc.setTextColor(100,120,135);
+        doc.text('Registros: '+rows.length,pageW-12,13,{align:'right'});
+      }
+
+      doc.autoTable({
+        head:[['Nombre','Localidad','Contratista','Monto contratado','Plazo','Avance actual','Estado actual']],
+        body,
+        startY:51,
+        margin:{top:51,left:10,right:10,bottom:14},
+        styles:{
+          font:'helvetica',fontSize:7.8,textColor:[31,55,73],
+          cellPadding:{top:2.8,right:2.5,bottom:2.8,left:2.5},
+          lineColor:line,lineWidth:.18,valign:'middle',overflow:'linebreak'
+        },
+        headStyles:{
+          fillColor:[234,242,248],textColor:[41,75,99],
+          fontStyle:'bold',fontSize:7.5,lineColor:[205,220,230],lineWidth:.25
+        },
+        alternateRowStyles:{fillColor:[249,251,253]},
+        columnStyles:{
+          0:{cellWidth:105,fontStyle:'bold'},
+          1:{cellWidth:35},
+          2:{cellWidth:48},
+          3:{cellWidth:38,halign:'right'},
+          4:{cellWidth:25},
+          5:{cellWidth:32,halign:'center'},
+          6:{cellWidth:97}
+        },
+        didDrawPage:()=>{
+          drawHeader();
+          const page=doc.internal.getNumberOfPages();
+          doc.setDrawColor(...line);doc.line(10,pageH-10,pageW-10,pageH-10);
+          doc.setFontSize(7.5);doc.setTextColor(110,130,145);
+          doc.text('EPAS · Tablero de gestión',10,pageH-5.5);
+          doc.text('Página '+page,pageW-10,pageH-5.5,{align:'right'});
+        }
+      });
+
+      let finalY=(doc.lastAutoTable&&doc.lastAutoTable.finalY)||51;
+      if(finalY>pageH-20){
+        doc.addPage();
+        finalY=18;
+      }
+      doc.setDrawColor(...line);
+      doc.line(10,finalY+4,pageW-10,finalY+4);
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(85,105,120);
+      doc.text('Fecha y hora de impresión: '+generated,10,finalY+10);
+
+      doc.save('EPAS_Obras_en_ejecucion_'+new Date().toISOString().slice(0,10)+'.pdf');
+    }catch(err){
+      console.error('PDF Obras en ejecución:',err);
+      alert('No se pudo generar el PDF. Probá nuevamente.');
+    }finally{
+      if(btn){btn.disabled=false;btn.innerHTML=old||'▣ Exportar PDF';}
+    }
   }
 
   function destroy(name){try{if(typeof state!=='undefined'&&state.charts&&state.charts[name]){state.charts[name].destroy();state.charts[name]=null;}}catch(e){}}
