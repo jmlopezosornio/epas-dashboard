@@ -2,6 +2,7 @@
   const BOOK_ID='1t1gopI3Iy6tB5DC-2wJEjrLJeDUFKmxG9azBHlYbhGM';
   const WORKS_GID='0';
   const dateByKey=new Map();
+  const observationByKey=new Map();
   let loaded=false;
 
   function keyPart(v){
@@ -27,6 +28,8 @@
         if(!first || first==='OBRAS A EJECUTAR' || first==='LOCALIDAD' || first==='PROYECTOS A CONTRATAR' || first.startsWith('SUBTOTALES') || first.startsWith('TOTALES')) continue;
         const k=rowKey(r[0],r[1],r[9]);
         dateByKey.set(k,normalizeDate(r[10]));
+        const obs=String(r[12]??'').replace(/\s+/g,' ').trim();
+        if(obs) observationByKey.set(k,obs);
       }
       loaded=true;
       enhancePlanTable();
@@ -93,11 +96,26 @@
     cells[7].remove();
     cells[8].remove();
 
+    const key=rowKey(localidad,nombre,expediente);
     const lic=document.createElement('td');
-    const value=dateByKey.get(rowKey(localidad,nombre,expediente)) || '—';
+    const value=dateByKey.get(key) || '—';
     lic.textContent=value;
     lic.className='plan-licitacion-cell';
     tr.appendChild(lic);
+
+    if(currentPlanMode()==='PROYECTO'){
+      const obs=observationByKey.get(key);
+      if(obs){
+        const info=document.createElement('span');
+        info.className='project-observation-tip';
+        info.textContent='i';
+        info.setAttribute('data-tip',obs);
+        info.setAttribute('aria-label','Observaciones: '+obs);
+        info.setAttribute('tabindex','0');
+        cells[1].appendChild(document.createTextNode(' '));
+        cells[1].appendChild(info);
+      }
+    }
     tr.dataset.planV2Done='1';
   }
 
@@ -308,6 +326,10 @@
     .plan-investment-value{cursor:help;text-decoration:underline dotted rgba(39,68,90,.45);text-underline-offset:3px;white-space:nowrap}
     .plan-investment-cell{line-height:1.55}
     .plan-licitacion-cell{white-space:nowrap;color:#27445a}
+    .project-observation-tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#e8f3ff;color:#1477c9;font-size:11px;font-weight:900;cursor:help;vertical-align:middle;margin-left:4px}
+    .project-observation-tip::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);width:max-content;max-width:360px;min-width:190px;padding:9px 11px;border-radius:9px;background:#0d2b48;color:#fff;font-size:11px;font-weight:500;line-height:1.4;white-space:normal;box-shadow:0 8px 24px rgba(13,43,72,.22);opacity:0;visibility:hidden;pointer-events:none;z-index:1000}
+    .project-observation-tip::before{content:'';position:absolute;left:50%;bottom:100%;transform:translate(-50%,5px);border:6px solid transparent;border-top-color:#0d2b48;opacity:0;visibility:hidden;z-index:1001}
+    .project-observation-tip:hover::after,.project-observation-tip:focus::after,.project-observation-tip:hover::before,.project-observation-tip:focus::before{opacity:1;visibility:visible}
   `;
   document.head.appendChild(style);
 
