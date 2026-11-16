@@ -119,12 +119,22 @@
     tr.dataset.planV2Done='1';
   }
 
+  function syncInvestmentVisibility(){
+    const hide=currentPlanMode()==='OBRA';
+    const table=document.querySelector('.plan-table');
+    if(!table) return;
+    table.querySelectorAll('[data-plan-v2="investment"], .plan-investment-cell').forEach(el=>{
+      el.classList.toggle('plan-col-hidden',hide);
+    });
+  }
+
   function enhancePlanTable(){
     const body=document.getElementById('planDetailBody');
     if(!body) return;
     const table=body.closest('table');
     enhanceHeader(table);
     [...body.querySelectorAll('tr')].forEach(enhanceRow);
+    syncInvestmentVisibility();
   }
 
 
@@ -140,6 +150,7 @@
     const btn=document.getElementById('exportPlanPdf');
     if(!btn) return;
     const mode=currentPlanMode();
+    syncInvestmentVisibility();
     const isProject=mode==='PROYECTO';
     btn.style.display=(mode==='OBRA'||isProject)?'inline-flex':'none';
     btn.title=isProject?'Generar PDF del listado visible de Proyectos a contratar':'Generar PDF del listado visible de Obras a contratar';
@@ -325,6 +336,7 @@
   style.textContent=`
     .plan-investment-value{cursor:help;text-decoration:underline dotted rgba(39,68,90,.45);text-underline-offset:3px;white-space:nowrap}
     .plan-investment-cell{line-height:1.55}
+    .plan-col-hidden{display:none!important}
     .plan-licitacion-cell{white-space:nowrap;color:#27445a}
     .project-observation-tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#e8f3ff;color:#1477c9;font-size:11px;font-weight:900;cursor:help;vertical-align:middle;margin-left:4px}
     .project-observation-tip::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);width:max-content;max-width:360px;min-width:190px;padding:9px 11px;border-radius:9px;background:#0d2b48;color:#fff;font-size:11px;font-weight:500;line-height:1.4;white-space:normal;box-shadow:0 8px 24px rgba(13,43,72,.22);opacity:0;visibility:hidden;pointer-events:none;z-index:1000}
