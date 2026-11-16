@@ -103,18 +103,13 @@
     lic.className='plan-licitacion-cell';
     tr.appendChild(lic);
 
-    if(currentPlanMode()==='PROYECTO'){
-      const obs=observationByKey.get(key);
-      if(obs){
-        const info=document.createElement('span');
-        info.className='project-observation-tip';
-        info.textContent='i';
-        info.setAttribute('data-tip',obs);
-        info.setAttribute('aria-label','Observaciones: '+obs);
-        info.setAttribute('tabindex','0');
-        cells[1].appendChild(document.createTextNode(' '));
-        cells[1].appendChild(info);
-      }
+    const obs=observationByKey.get(key);
+    if(obs){
+      cells[1].classList.add('plan-name-observation-tip');
+      cells[1].setAttribute('data-tip',obs);
+      cells[1].setAttribute('title',obs);
+      cells[1].setAttribute('tabindex','0');
+      cells[1].setAttribute('aria-label','Observaciones: '+obs);
     }
     tr.dataset.planV2Done='1';
   }
@@ -338,10 +333,10 @@
     .plan-investment-cell{line-height:1.55}
     .plan-col-hidden{display:none!important}
     .plan-licitacion-cell{white-space:nowrap;color:#27445a}
-    .project-observation-tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#e8f3ff;color:#1477c9;font-size:11px;font-weight:900;cursor:help;vertical-align:middle;margin-left:4px}
-    .project-observation-tip::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);width:max-content;max-width:360px;min-width:190px;padding:9px 11px;border-radius:9px;background:#0d2b48;color:#fff;font-size:11px;font-weight:500;line-height:1.4;white-space:normal;box-shadow:0 8px 24px rgba(13,43,72,.22);opacity:0;visibility:hidden;pointer-events:none;z-index:1000}
-    .project-observation-tip::before{content:'';position:absolute;left:50%;bottom:100%;transform:translate(-50%,5px);border:6px solid transparent;border-top-color:#0d2b48;opacity:0;visibility:hidden;z-index:1001}
-    .project-observation-tip:hover::after,.project-observation-tip:focus::after,.project-observation-tip:hover::before,.project-observation-tip:focus::before{opacity:1;visibility:visible}
+    .plan-name-observation-tip{position:relative;cursor:help}
+    .plan-name-observation-tip::after{content:attr(data-tip);position:absolute;left:18px;bottom:calc(100% + 8px);width:max-content;max-width:420px;min-width:220px;padding:10px 12px;border-radius:9px;background:#0d2b48;color:#fff;font-size:11px;font-weight:500;line-height:1.45;white-space:normal;box-shadow:0 8px 24px rgba(13,43,72,.22);opacity:0;visibility:hidden;pointer-events:none;z-index:1200}
+    .plan-name-observation-tip::before{content:'';position:absolute;left:32px;bottom:100%;transform:translateY(5px);border:6px solid transparent;border-top-color:#0d2b48;opacity:0;visibility:hidden;z-index:1201}
+    .plan-name-observation-tip:hover::after,.plan-name-observation-tip:focus::after,.plan-name-observation-tip:hover::before,.plan-name-observation-tip:focus::before{opacity:1;visibility:visible}
   `;
   document.head.appendChild(style);
 
