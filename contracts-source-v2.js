@@ -27,6 +27,7 @@
         final:fin,
         finalEfectiva:textEnd||fin,
         nuevaTramitacion:note,
+        observaciones:cleanText(row[14]),
         extensionStart:null,
         extensionEnd:null
       });
