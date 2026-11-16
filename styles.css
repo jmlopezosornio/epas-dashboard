@@ -330,3 +330,8 @@ body{background:#f4f8fb;color:#122b40}
 .plan-kpis.single-mode{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:1200px){.plan-kpis.single-mode{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.plan-kpis.single-mode{grid-template-columns:1fr}}
+
+.contract-observation-tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#e8f3ff;color:#1477c9;font-size:11px;font-weight:900;cursor:help;vertical-align:middle;margin-left:5px}
+.contract-observation-tip::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);width:max-content;max-width:380px;min-width:200px;padding:9px 11px;border-radius:9px;background:#0d2b48;color:#fff;font-size:11px;font-weight:500;line-height:1.45;white-space:normal;box-shadow:0 8px 24px rgba(13,43,72,.22);opacity:0;visibility:hidden;pointer-events:none;z-index:1100}
+.contract-observation-tip::before{content:'';position:absolute;left:50%;bottom:100%;transform:translate(-50%,5px);border:6px solid transparent;border-top-color:#0d2b48;opacity:0;visibility:hidden;z-index:1101}
+.contract-observation-tip:hover::after,.contract-observation-tip:focus::after,.contract-observation-tip:hover::before,.contract-observation-tip:focus::before{opacity:1;visibility:visible}
