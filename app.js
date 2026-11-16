@@ -58,7 +58,7 @@
       document.body.appendChild(planV2);
 
       var contracts=document.createElement('script');
-      contracts.src='contracts-source-v2.js?v=20261116-1';
+      contracts.src='contracts-source-v2.js?v=20261116-2';
       contracts.onerror=function(){console.error('No se pudo cargar contracts-source-v2.js');};
       document.body.appendChild(contracts);
 
