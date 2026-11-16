@@ -27,7 +27,7 @@
         final:fin,
         finalEfectiva:textEnd||fin,
         nuevaTramitacion:note,
-        observaciones:cleanText(row[14]),
+        observaciones:cleanText(row[9]),
         extensionStart:null,
         extensionEnd:null
       });
@@ -51,6 +51,7 @@
         empresa:cleanText(row[6]),
         plazo:numeric(row[7]),
         fechaLicitacion:excelDateToJS(row[13]),
+        observaciones:cleanText(row[14]),
         inicio:excelDateToJS(row[11]),
         final:excelDateToJS(row[12])
       });
@@ -83,7 +84,7 @@
     document.getElementById('kpiProcessAwarded').textContent=fmtCompactMoney(awarded);
     document.getElementById('kpiProcessCities').textContent=NUM.format(cities.size);
     document.getElementById('processTableTotal').textContent=`${rows.length} trámite${rows.length===1?'':'s'}`;
-    document.getElementById('processBody').innerHTML=rows.length?rows.map(c=>`<tr><td>${escapeHtml(c.localidad)}</td><td class="contract-name">${escapeHtml(c.contrato)}</td><td class="exp-cell">${escapeHtml(c.expediente)}</td><td class="numeric">${c.presupuesto?fmtMoney(c.presupuesto):'—'}</td><td class="numeric">${c.adjudicado?fmtMoney(c.adjudicado):'—'}</td><td>${escapeHtml(c.empresa)||'—'}</td><td>${c.plazo?`${NUM.format(c.plazo)} días`:'—'}</td><td>${fmtDate(c.fechaLicitacion)}</td><td>${fmtDate(c.inicio)}</td><td>${fmtDate(c.final)}</td></tr>`).join(''):'<tr><td class="empty-row" colspan="10">Sin tramitaciones para los filtros seleccionados.</td></tr>';
+    document.getElementById('processBody').innerHTML=rows.length?rows.map(c=>`<tr><td>${escapeHtml(c.localidad)}</td><td class="contract-name">${escapeHtml(c.contrato)}${c.observaciones?` <span class="contract-observation-tip" data-tip="${escapeHtml(c.observaciones)}" tabindex="0" aria-label="Observaciones: ${escapeHtml(c.observaciones)}">i</span>`:''}</td><td class="exp-cell">${escapeHtml(c.expediente)}</td><td class="numeric">${c.presupuesto?fmtMoney(c.presupuesto):'—'}</td><td class="numeric">${c.adjudicado?fmtMoney(c.adjudicado):'—'}</td><td>${escapeHtml(c.empresa)||'—'}</td><td>${c.plazo?`${NUM.format(c.plazo)} días`:'—'}</td><td>${fmtDate(c.fechaLicitacion)}</td><td>${fmtDate(c.inicio)}</td><td>${fmtDate(c.final)}</td></tr>`).join(''):'<tr><td class="empty-row" colspan="10">Sin tramitaciones para los filtros seleccionados.</td></tr>';
   }
 
   window.renderProcessContracts=renderProcessContractsV3;
