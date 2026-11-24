@@ -36,36 +36,58 @@
   }
 
   function parse(mx){
-    var defs=[];
-    var localityRow=-1, monthHeaderRow=-1;
-    for(var rr=0;rr<mx.length;rr++){
-      var first=String((mx[rr]||[])[0]||'').trim().toLowerCase();
-      if(first==='localidad') localityRow=rr;
-      if(first==='mes') {monthHeaderRow=rr;break;}
-    }
-    if(localityRow<0||monthHeaderRow<0) throw new Error('No se reconoció la estructura de la hoja Facturación (filas recibidas: '+mx.length+')');
-    var h=mx[localityRow]||[];
-    for(var c=1;c<h.length-1;c+=2){
-      var name=String(h[c]||'').trim();
-      if(!name||/^totales$/i.test(name))break;
-      defs.push({name:name,f:c,i:c+1});
-    }
+    if(!Array.isArray(mx)||!mx.length) throw new Error('Google Sheets no devolvió filas de Facturación');
+
+    // GViz puede omitir las filas de encabezado y devolver directamente Enero..Totales.
+    // Detectamos el inicio por nombre de mes y usamos la estructura fija A:AI de la hoja.
+    var monthNames=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    var firstMonth=mx.findIndex(function(r){
+      return monthNames.indexOf(String((r||[])[0]||'').trim())>=0;
+    });
+    if(firstMonth<0) throw new Error('No se encontraron los meses en la hoja Facturación');
+
+    var localityNames=[
+      'Neuquén','Chos Malal','Caviahue','Copahue','Taquimilán','Andacollo',
+      'Junín de los Andes','Senillosa','Villa Chocón','Villa La Angostura',
+      'Municipio de Cutral Co (PIPH)','Municipio de Plaza Huincul (PIPH)',
+      'Municipio de Centenario y B° Nueva España','Aerocoop Ltda.',
+      'Planta Metanol (PIPH)','B° Verde Limay - Plottier'
+    ];
+
     var months=[],pending=[];
-    for(var r=monthHeaderRow+1;r<mx.length;r++){
-      var name=String((mx[r]||[])[0]||'').trim();
-      if(!name)continue;
-      if(/^totales$/i.test(name))break;
-      var f=n((mx[r]||[])[33]),i=n((mx[r]||[])[34]);
-      if(f===0&&i===0)pending.push(name);
-      else months.push({month:name,facturado:f,cobrado:i,row:mx[r]||[]});
+    for(var r=firstMonth;r<mx.length;r++){
+      var row=mx[r]||[];
+      var name=String(row[0]||'').trim();
+      if(!name) continue;
+      if(/^totales$/i.test(name)) break;
+      if(monthNames.indexOf(name)<0) continue;
+      var f=n(row[33]),i=n(row[34]);
+      if(f===0&&i===0) pending.push(name);
+      else months.push({month:name,facturado:f,cobrado:i,row:row});
     }
+
+    if(!months.length) throw new Error('Se detectaron los meses, pero no hay importes cargados');
+
     var tf=months.reduce(function(s,x){return s+x.facturado;},0);
     var ti=months.reduce(function(s,x){return s+x.cobrado;},0);
-    var cities=defs.map(function(q){
+
+    var cities=localityNames.map(function(name,idx){
+      var factCol=1+(idx*2), cobCol=factCol+1;
       var f=0,i=0;
-      months.forEach(function(mm){f+=n(mm.row[q.f]);i+=n(mm.row[q.i]);});
-      return {name:q.name,facturado:f,cobrado:i,pct:f?i/f*100:0,diferencia:f-i,participacion:tf?f/tf*100:0};
+      months.forEach(function(mm){
+        f+=n(mm.row[factCol]);
+        i+=n(mm.row[cobCol]);
+      });
+      return {
+        name:name,
+        facturado:f,
+        cobrado:i,
+        pct:f?i/f*100:0,
+        diferencia:f-i,
+        participacion:tf?f/tf*100:0
+      };
     }).filter(function(x){return x.facturado>0||x.cobrado>0;});
+
     return {months:months,pending:pending,cities:cities,totals:{facturado:tf,cobrado:ti}};
   }
 
