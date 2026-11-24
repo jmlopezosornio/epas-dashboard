@@ -47,6 +47,17 @@
         stickyTables.href='sticky-tables.css?v=20261027-2';
       }
 
+      var billingCss=document.createElement('link');
+      billingCss.rel='stylesheet';
+      billingCss.href='billing-annual.css?v=20261124-1';
+      billingCss.dataset.billingAnnual='1';
+      document.head.appendChild(billingCss);
+
+      var billingAnnual=document.createElement('script');
+      billingAnnual.src='billing-annual.js?v=20261124-1';
+      billingAnnual.onerror=function(){console.error('No se pudo cargar billing-annual.js');};
+      document.body.appendChild(billingAnnual);
+
       var quickLinks=document.createElement('script');
       quickLinks.src='quick-links.js?v=20261102-1';
       quickLinks.onerror=function(){console.error('No se pudo cargar quick-links.js');};
