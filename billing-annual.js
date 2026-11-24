@@ -137,8 +137,59 @@
     var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='EPAS_facturacion_cobranza_2026.csv';a.click();URL.revokeObjectURL(a.href);
   }
 
-  function pdf(){
-    alert('El PDF de Facturación quedará habilitado en la siguiente actualización del reporte.');
+  function loadOnce(src,test){
+    return new Promise(function(resolve,reject){
+      if(test())return resolve();
+      var ex=[].slice.call(document.scripts).find(function(x){return x.src===src;});
+      if(ex){ex.addEventListener('load',resolve,{once:true});ex.addEventListener('error',reject,{once:true});return;}
+      var el=document.createElement('script');el.src=src;el.onload=resolve;el.onerror=reject;document.head.appendChild(el);
+    });
+  }
+
+  async function pdf(){
+    try{
+      await loadOnce('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',function(){return !!(window.jspdf&&window.jspdf.jsPDF);});
+      await loadOnce('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js',function(){return !!(window.jspdf&&window.jspdf.jsPDF&&window.jspdf.jsPDF.API&&window.jspdf.jsPDF.API.autoTable);});
+      var jsPDF=window.jspdf.jsPDF;
+      var doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a3',compress:true});
+      var pageW=doc.internal.pageSize.getWidth();
+      var navy=[11,47,87],line=[218,228,235];
+      var gen=new Date().toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'});
+      var t=S.totals,ratio=t.facturado?t.cobrado/t.facturado*100:0;
+
+      doc.setFillColor.apply(doc,navy);doc.rect(0,0,pageW,24,'F');
+      doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(16);
+      doc.text('Facturación y Cobranza · Resumen anual',12,10);
+      doc.setFont('helvetica','normal');doc.setFontSize(9);
+      doc.text(document.getElementById('billingPeriod').textContent||'',12,16);
+
+      doc.setTextColor(35,60,80);doc.setFont('helvetica','bold');doc.setFontSize(10);
+      doc.text('Facturado: '+m(t.facturado)+'   Ingresado: '+m(t.cobrado)+'   Índice: '+p(ratio)+'   Diferencia: '+m(t.facturado-t.cobrado),12,33);
+
+      var rows=S.cities.slice().sort(function(a,b){return b.facturado-a.facturado;}).map(function(c){
+        return [c.name,m(c.facturado),m(c.cobrado),p(c.pct),m(c.diferencia),p(c.participacion)];
+      });
+      rows.push(['Total',m(t.facturado),m(t.cobrado),p(ratio),m(t.facturado-t.cobrado),'100,0 %']);
+
+      doc.autoTable({
+        head:[['Localidad','Facturado acumulado','Ingresado acumulado','% Cobranza','Diferencia','Participación']],
+        body:rows,
+        startY:40,
+        margin:{left:12,right:12,bottom:16},
+        styles:{font:'helvetica',fontSize:8,cellPadding:3,lineColor:line,lineWidth:.15,textColor:[31,55,73]},
+        headStyles:{fillColor:[234,242,248],textColor:[41,75,99],fontStyle:'bold'},
+        alternateRowStyles:{fillColor:[249,251,253]}
+      });
+      var y=(doc.lastAutoTable&&doc.lastAutoTable.finalY?doc.lastAutoTable.finalY:40)+8;
+      var ph=doc.internal.pageSize.getHeight();
+      if(y>ph-18){doc.addPage();y=18;}
+      doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(90,110,125);
+      doc.text('Fecha y hora de impresión: '+gen,12,y);
+      doc.save('EPAS_Facturacion_y_Cobranza_2026.pdf');
+    }catch(err){
+      console.error('PDF Facturación:',err);
+      alert('No se pudo generar el PDF. Probá nuevamente.');
+    }
   }
 
   function init(){
