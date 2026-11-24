@@ -16,51 +16,51 @@
   function e(v){return String(v==null?'':v).replace(/[&<>"']/g,function(x){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x];});}
   function d(k){try{if(S.charts[k])S.charts[k].destroy();}catch(x){} S.charts[k]=null;}
 
-  function loadSheet(){
-    return new Promise(function(resolve,reject){
-      var cb='__epasBilling_'+Date.now()+'_'+Math.floor(Math.random()*100000);
-      var timer=setTimeout(function(){
-        cleanup();
-        reject(new Error('Tiempo de espera agotado al consultar Google Sheets'));
-      },15000);
-      function cleanup(){
-        clearTimeout(timer);
-        try{delete window[cb];}catch(e){window[cb]=undefined;}
-        if(script&&script.parentNode)script.parentNode.removeChild(script);
+  function parseCsv(text){
+    var rows=[],row=[],cell='',quoted=false;
+    for(var i=0;i<text.length;i++){
+      var ch=text[i];
+      if(quoted){
+        if(ch==='"' && text[i+1]==='"'){cell+='"';i++;}
+        else if(ch==='"') quoted=false;
+        else cell+=ch;
+      }else{
+        if(ch==='"') quoted=true;
+        else if(ch===','){row.push(cell);cell='';}
+        else if(ch==='\n'){row.push(cell);rows.push(row);row=[];cell='';}
+        else if(ch!=='\r') cell+=ch;
       }
-      window[cb]=function(resp){
-        try{
-          if(!resp||resp.status==='error') throw new Error('Respuesta inválida de Google Sheets');
-          var table=resp.table||{};
-          var cols=(table.cols||[]).map(function(c){return c.label||'';});
-          var matrix=[cols];
-          (table.rows||[]).forEach(function(r){
-            matrix.push((r.c||[]).map(function(c){return c?((c.v!==null&&c.v!==undefined)?c.v:''):'';}));
-          });
-          cleanup();
-          resolve(matrix);
-        }catch(err){
-          cleanup();
-          reject(err);
-        }
-      };
-      var script=document.createElement('script');
-      script.src='https://docs.google.com/spreadsheets/d/'+BOOK_ID+'/gviz/tq?gid='+BILLING_GID+'&tqx=responseHandler:'+cb+'&headers=0';
-      script.onerror=function(){cleanup();reject(new Error('No se pudo conectar con Google Sheets'));};
-      document.head.appendChild(script);
-    });
+    }
+    row.push(cell);
+    if(row.some(function(v){return v!=='';})) rows.push(row);
+    return rows;
+  }
+
+  function loadSheet(){
+    var url='https://docs.google.com/spreadsheets/d/'+BOOK_ID+'/gviz/tq?tqx=out:csv&gid='+BILLING_GID+'&_='+Date.now();
+    return fetch(url,{cache:'no-store'}).then(function(resp){
+      if(!resp.ok) throw new Error('No se pudo consultar Google Sheets ('+resp.status+')');
+      return resp.text();
+    }).then(parseCsv);
   }
 
   function parse(mx){
     var defs=[];
-    var h=mx[2]||[];
+    var localityRow=-1, monthHeaderRow=-1;
+    for(var rr=0;rr<mx.length;rr++){
+      var first=String((mx[rr]||[])[0]||'').trim().toLowerCase();
+      if(first==='localidad') localityRow=rr;
+      if(first==='mes') {monthHeaderRow=rr;break;}
+    }
+    if(localityRow<0||monthHeaderRow<0) throw new Error('No se reconoció la estructura de la hoja Facturación');
+    var h=mx[localityRow]||[];
     for(var c=1;c<h.length-1;c+=2){
       var name=String(h[c]||'').trim();
       if(!name||/^totales$/i.test(name))break;
       defs.push({name:name,f:c,i:c+1});
     }
     var months=[],pending=[];
-    for(var r=4;r<mx.length;r++){
+    for(var r=monthHeaderRow+1;r<mx.length;r++){
       var name=String((mx[r]||[])[0]||'').trim();
       if(!name)continue;
       if(/^totales$/i.test(name))break;
