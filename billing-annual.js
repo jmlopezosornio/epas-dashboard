@@ -80,6 +80,7 @@
 
   function shell(){
     var tab=document.getElementById('tab-cobranza'); if(!tab)return;
+    if(tab.querySelector('.billing-annual')) return;
     tab.innerHTML=
       '<div class="billing-annual">'+
       '<div class="section-heading billing-heading"><div><div class="section-kicker">Gestión comercial</div><h2>Facturación y Cobranza · Resumen anual</h2><p id="billingPeriod">Acumulado anual</p></div>'+
