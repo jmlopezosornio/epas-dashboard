@@ -16,6 +16,41 @@
   function e(v){return String(v==null?'':v).replace(/[&<>"']/g,function(x){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x];});}
   function d(k){try{if(S.charts[k])S.charts[k].destroy();}catch(x){} S.charts[k]=null;}
 
+  function loadSheet(){
+    return new Promise(function(resolve,reject){
+      var cb='__epasBilling_'+Date.now()+'_'+Math.floor(Math.random()*100000);
+      var timer=setTimeout(function(){
+        cleanup();
+        reject(new Error('Tiempo de espera agotado al consultar Google Sheets'));
+      },15000);
+      function cleanup(){
+        clearTimeout(timer);
+        try{delete window[cb];}catch(e){window[cb]=undefined;}
+        if(script&&script.parentNode)script.parentNode.removeChild(script);
+      }
+      window[cb]=function(resp){
+        try{
+          if(!resp||resp.status==='error') throw new Error('Respuesta inválida de Google Sheets');
+          var table=resp.table||{};
+          var cols=(table.cols||[]).map(function(c){return c.label||'';});
+          var matrix=[cols];
+          (table.rows||[]).forEach(function(r){
+            matrix.push((r.c||[]).map(function(c){return c?((c.v!==null&&c.v!==undefined)?c.v:''):'';}));
+          });
+          cleanup();
+          resolve(matrix);
+        }catch(err){
+          cleanup();
+          reject(err);
+        }
+      };
+      var script=document.createElement('script');
+      script.src='https://docs.google.com/spreadsheets/d/'+BOOK_ID+'/gviz/tq?gid='+BILLING_GID+'&tqx=responseHandler:'+cb+'&headers=0';
+      script.onerror=function(){cleanup();reject(new Error('No se pudo conectar con Google Sheets'));};
+      document.head.appendChild(script);
+    });
+  }
+
   function parse(mx){
     var defs=[];
     var h=mx[2]||[];
@@ -119,8 +154,7 @@
 
   function load(){
     var st=document.getElementById('billingStatus'); if(st)st.textContent='Actualizando desde Google Sheets…';
-    if(typeof loadGvizJsonp!=='function'){if(st)st.textContent='Error: lector de Google Sheets no disponible';return;}
-    loadGvizJsonp(BOOK_ID,BILLING_GID).then(function(mx){
+    loadSheet().then(function(mx){
       var q=parse(mx); S.months=q.months;S.pending=q.pending;S.cities=q.cities;S.totals=q.totals;render();
       if(st)st.textContent='Google Sheets conectado · '+q.months.length+' meses con datos · '+q.cities.length+' localidades/segmentos';
       var u=document.getElementById('billingUpdated');if(u)u.textContent='Actualizado '+new Date().toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'});
