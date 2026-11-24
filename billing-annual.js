@@ -217,7 +217,7 @@
           responsive:true,
           maintainAspectRatio:false,
           plugins:{
-            legend:{position:'top',align:'end',labels:{usePointStyle:true,boxWidth:10}},
+            legend:{position:'top',align:'end',labels:{usePointStyle:true,boxWidth:10,font:{size:12,weight:'700'}}},
             tooltip:{
               callbacks:{
                 label:function(ctx){
@@ -231,12 +231,13 @@
           scales:{
             y:{
               ticks:{
+                font:{size:11,weight:'600'},
                 callback:function(v){
                   return '$ ' + Number(v).toLocaleString('es-AR',{maximumFractionDigits:1}) + ' mil M';
                 }
               }
             },
-            x:{grid:{display:false}}
+            x:{grid:{display:false},ticks:{font:{size:11,weight:'600'}}}
           }
         }
       });
@@ -272,7 +273,7 @@
           responsive:true,
           maintainAspectRatio:false,
           plugins:{
-            legend:{position:'top',align:'end',labels:{usePointStyle:true,boxWidth:10}}
+            legend:{position:'top',align:'end',labels:{usePointStyle:true,boxWidth:10,font:{size:12,weight:'700'}}}
           },
           scales:{
             x:{
@@ -282,7 +283,7 @@
                 }
               }
             },
-            y:{grid:{display:false}}
+            y:{grid:{display:false},ticks:{font:{size:11,weight:'600'}}}
           }
         }
       });
@@ -305,6 +306,29 @@
     if(neu){
       document.getElementById('billFocusCityName').textContent = neu.name;
       document.getElementById('billFocusCityShare').textContent = pct(neu.participacion);
+    }
+
+    var gap = state.cities.slice().sort(function(a,b){
+      return b.diferencia-a.diferencia;
+    })[0];
+    var low = state.cities.filter(function(x){
+      return x.facturado>0;
+    }).sort(function(a,b){
+      return a.pct-b.pct;
+    })[0];
+
+    var gapCity = document.getElementById('billingGapCity');
+    var gapDetail = document.getElementById('billingGapDetail');
+    var lowCity = document.getElementById('billingLowCity');
+    var lowDetail = document.getElementById('billingLowDetail');
+
+    if(gap && gapCity && gapDetail){
+      gapCity.textContent = gap.name;
+      gapDetail.textContent = 'Diferencia: ' + moneyM(gap.diferencia) + ' · ' + pct(gap.participacion) + ' del total facturado';
+    }
+    if(low && lowCity && lowDetail){
+      lowCity.textContent = low.name;
+      lowDetail.textContent = pct(low.pct) + ' de cobranza acumulada';
     }
 
     var period = state.months.length
@@ -403,12 +427,96 @@
     });
   }
 
+  function loadScriptOnce(src,test){
+    return new Promise(function(resolve,reject){
+      if(test()) return resolve();
+      var existing = Array.from(document.scripts).find(function(x){ return x.src===src; });
+      if(existing){
+        existing.addEventListener('load',resolve,{once:true});
+        existing.addEventListener('error',reject,{once:true});
+        return;
+      }
+      var el=document.createElement('script');
+      el.src=src;
+      el.onload=resolve;
+      el.onerror=reject;
+      document.head.appendChild(el);
+    });
+  }
+
+  async function exportPdf(){
+    try{
+      await loadScriptOnce(
+        'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
+        function(){ return !!(window.jspdf&&window.jspdf.jsPDF); }
+      );
+      await loadScriptOnce(
+        'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js',
+        function(){ return !!(window.jspdf&&window.jspdf.jsPDF&&window.jspdf.jsPDF.API&&window.jspdf.jsPDF.API.autoTable); }
+      );
+
+      var jsPDF=window.jspdf.jsPDF;
+      var doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a3',compress:true});
+      var w=doc.internal.pageSize.getWidth();
+      var t=state.totals;
+      var ratio=t.facturado?(t.cobrado/t.facturado*100):0;
+
+      doc.setFillColor(11,47,87);
+      doc.rect(0,0,w,24,'F');
+      doc.setTextColor(255,255,255);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(16);
+      doc.text('EPAS · Facturación y Cobranza · Resumen anual',12,10);
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(9);
+      doc.text(document.getElementById('billingPeriod').textContent||'',12,16);
+
+      doc.setTextColor(35,60,80);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(10);
+      doc.text(
+        'Facturado: '+moneyM(t.facturado)+'   Ingresado: '+moneyM(t.cobrado)+
+        '   Índice: '+pct(ratio)+'   Diferencia: '+moneyM(t.facturado-t.cobrado),
+        12,33
+      );
+
+      var body=state.cities.slice().sort(function(a,b){return b.facturado-a.facturado;}).map(function(c){
+        return [c.name,moneyM(c.facturado),moneyM(c.cobrado),pct(c.pct),moneyM(c.diferencia),pct(c.participacion)];
+      });
+      body.push(['Total',moneyM(t.facturado),moneyM(t.cobrado),pct(ratio),moneyM(t.facturado-t.cobrado),'100,0 %']);
+
+      doc.autoTable({
+        head:[['Localidad','Facturado acumulado','Ingresado acumulado','% Cobranza','Diferencia','Participación']],
+        body:body,
+        startY:40,
+        margin:{left:12,right:12,bottom:16},
+        styles:{font:'helvetica',fontSize:8,cellPadding:3,lineColor:[218,228,235],lineWidth:.15,textColor:[31,55,73]},
+        headStyles:{fillColor:[234,242,248],textColor:[41,75,99],fontStyle:'bold'},
+        alternateRowStyles:{fillColor:[249,251,253]}
+      });
+
+      var y=(doc.lastAutoTable&&doc.lastAutoTable.finalY?doc.lastAutoTable.finalY:40)+8;
+      var h=doc.internal.pageSize.getHeight();
+      if(y>h-18){doc.addPage();y=18;}
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(90,110,125);
+      doc.text('Fecha y hora de impresión: '+new Date().toLocaleString('es-AR'),12,y);
+      doc.save('EPAS_Facturacion_y_Cobranza_2026.pdf');
+    }catch(err){
+      console.error('PDF Facturación:',err);
+      alert('No se pudo generar el PDF.');
+    }
+  }
+
   function init(){
     var reload = document.getElementById('reloadBillingAnnual');
     var csv = document.getElementById('exportBillingCsv');
+    var pdf = document.getElementById('exportBillingPdf');
 
     if(reload) reload.addEventListener('click',load);
     if(csv) csv.addEventListener('click',exportCsv);
+    if(pdf) pdf.addEventListener('click',exportPdf);
 
     load();
   }
