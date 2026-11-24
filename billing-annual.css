@@ -1,36 +1,390 @@
+/* EPAS · Facturación anual · vista ejecutiva */
+#tab-cobranza{
+  padding:26px 28px 34px;
+  background:linear-gradient(180deg,#f8fbfd 0%,#f2f7fa 100%);
+}
+#tab-cobranza .billing-annual{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  max-width:1900px;
+  margin:0 auto;
+}
 
-#tab-cobranza{padding-bottom:28px}
-.billing-annual{display:flex;flex-direction:column;gap:16px}
-.billing-heading{align-items:flex-start}
-.billing-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-.billing-status{margin-top:-4px}
-.billing-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
-.billing-kpi{min-height:122px}
-.billing-kpi.accent strong{color:#0d6efd}
-.billing-kpi.danger strong{color:#b4232b}
-.billing-main-grid{display:grid;grid-template-columns:1.85fr 1.08fr 1fr;gap:14px;align-items:stretch}
-.billing-main-grid .panel{min-width:0}
-.billing-line-wrap,.billing-rank-wrap{height:310px}
-.billing-rate-panel{min-height:390px}
-.billing-rate-list{display:flex;flex-direction:column;gap:9px;padding:6px 4px 4px}
-.billing-rate-row{display:grid;grid-template-columns:minmax(120px,1.2fr) minmax(110px,1fr) 62px;align-items:center;gap:10px;font-size:13px}
-.billing-rate-name{font-weight:700;color:#27445a}
-.billing-rate-track{height:11px;background:#e7edf2;border-radius:999px;overflow:hidden}
-.billing-rate-fill{display:block;height:100%;border-radius:999px}
-.billing-rate-fill.good{background:#22b573}.billing-rate-fill.mid{background:#8bcf58}.billing-rate-fill.warn{background:#f5a623}.billing-rate-fill.bad{background:#e44b55}
-.billing-rate-row strong{text-align:right;color:#17384f}
-.billing-bottom-grid{display:grid;grid-template-columns:310px minmax(0,1fr);gap:14px;align-items:start}
-.billing-alerts{display:flex;flex-direction:column;gap:14px}
-.billing-alert-card{border-radius:16px;padding:18px 20px;border:1px solid #d7e4ed;background:#fff;box-shadow:0 8px 24px rgba(14,51,79,.06)}
-.billing-alert-card.info{background:#eaf6ff;border-color:#c8e6fb}.billing-alert-card.danger{background:#fff0f1;border-color:#f5cfd3}
-.billing-alert-card span{display:block;font-size:14px;font-weight:800;color:#31536d;margin-bottom:6px}
-.billing-alert-card strong{display:block;font-size:28px;line-height:1.05;color:#0d2b48;margin-bottom:8px}
-.billing-alert-card.danger strong{color:#a51e2a}
-.billing-alert-card small{font-size:12px;line-height:1.4;color:#60798b}
-.billing-table-panel{min-width:0}
-.billing-table tfoot td{background:#e8f4fb;font-weight:800;border-top:2px solid #c7dce9}
-.billing-pct-pill{display:inline-block;padding:3px 8px;border-radius:999px;font-weight:800}
-.billing-pct-pill.good{background:#e4f7ed;color:#087b43}.billing-pct-pill.mid{background:#eef8df;color:#5b7e15}.billing-pct-pill.warn{background:#fff4d6;color:#996300}.billing-pct-pill.bad{background:#ffe5e8;color:#b1202d}
-@media(max-width:1450px){.billing-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.billing-main-grid{grid-template-columns:1.5fr 1fr}.billing-rate-panel{grid-column:1/-1}}
-@media(max-width:1050px){.billing-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.billing-main-grid{grid-template-columns:1fr}.billing-bottom-grid{grid-template-columns:1fr}.billing-alerts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:650px){.billing-kpis{grid-template-columns:1fr}.billing-alerts{grid-template-columns:1fr}.billing-rate-row{grid-template-columns:1fr 1fr 52px}.billing-line-wrap,.billing-rank-wrap{height:280px}}
+/* Encabezado */
+#tab-cobranza .billing-heading{
+  align-items:center;
+  margin:0;
+  gap:24px;
+}
+#tab-cobranza .billing-heading>div:first-child{
+  position:relative;
+  padding-left:58px;
+}
+#tab-cobranza .billing-heading>div:first-child:before{
+  content:"▥";
+  position:absolute;
+  left:0;
+  top:2px;
+  width:44px;
+  height:44px;
+  border-radius:13px;
+  display:grid;
+  place-items:center;
+  color:#0b4d83;
+  font-size:28px;
+  font-weight:900;
+  background:linear-gradient(145deg,#e4f5ff,#f8fcff);
+  border:1px solid #cce4f2;
+  box-shadow:0 7px 18px rgba(11,77,131,.10);
+}
+#tab-cobranza .section-kicker{display:none}
+#tab-cobranza .billing-heading h2{
+  margin:0;
+  color:#0b2f57;
+  font-size:clamp(28px,2vw,38px);
+  line-height:1.05;
+  letter-spacing:-.035em;
+  font-weight:850;
+}
+#tab-cobranza .billing-heading p{
+  margin:7px 0 0;
+  color:#31556e;
+  font-size:16px;
+  font-weight:650;
+}
+#tab-cobranza .billing-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+#tab-cobranza .billing-actions .button{
+  min-height:46px;
+  padding:0 18px;
+  border-radius:12px;
+  font-size:14px;
+  font-weight:800;
+  background:#fff;
+  border:1px solid #cfdde7;
+  color:#0b2f57;
+  box-shadow:0 4px 12px rgba(22,52,74,.04);
+}
+#tab-cobranza .billing-actions .button:hover{
+  background:#f5faff;
+  border-color:#9ec9e4;
+}
+
+/* Estado de conexión */
+#tab-cobranza .billing-status{
+  margin:0;
+  min-height:48px;
+  padding:0 16px;
+  border-radius:12px;
+  background:#edf9fa;
+  border:1px solid #cfeaec;
+  color:#2f5965;
+  font-size:13px;
+  box-shadow:none;
+}
+#tab-cobranza .billing-status strong{font-weight:750}
+
+/* KPIs */
+#tab-cobranza .billing-kpis{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:14px;
+}
+#tab-cobranza .billing-kpi{
+  position:relative;
+  min-height:132px;
+  padding:20px 20px 18px 80px;
+  border-radius:16px;
+  border:1px solid #d5e2ea;
+  background:#fff;
+  box-shadow:0 7px 22px rgba(18,54,78,.06);
+  overflow:hidden;
+}
+#tab-cobranza .billing-kpi:before{
+  position:absolute;
+  left:20px;
+  top:22px;
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:#eaf6fd;
+  color:#0d75b8;
+  font-size:22px;
+  font-weight:900;
+  border:1px solid #d2ebf8;
+}
+#tab-cobranza .billing-kpi:nth-child(1):before{content:"$"}
+#tab-cobranza .billing-kpi:nth-child(2):before{content:"$";color:#149b59;background:#eaf9f1;border-color:#d6f0e2}
+#tab-cobranza .billing-kpi:nth-child(3):before{content:"%";color:#0b75d6;background:#e8f4ff}
+#tab-cobranza .billing-kpi:nth-child(4):before{content:"Δ";color:#c32632;background:#fff0f1;border-color:#f5d7da}
+#tab-cobranza .billing-kpi:nth-child(5):before{content:"⌖";color:#0d8298;background:#eaf8fa;border-color:#d1edf0}
+#tab-cobranza .billing-kpi span{
+  color:#284a63;
+  font-size:12px;
+  font-weight:850;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+}
+#tab-cobranza .billing-kpi strong{
+  margin:10px 0 4px;
+  color:#0b2f57;
+  font-size:clamp(27px,1.85vw,38px);
+  line-height:1;
+  letter-spacing:-.025em;
+  white-space:nowrap;
+}
+#tab-cobranza .billing-kpi small{
+  color:#5d7485;
+  font-size:12px;
+  font-weight:600;
+}
+#tab-cobranza .billing-kpi.accent{
+  background:linear-gradient(145deg,#f4fbff,#eaf6ff);
+  border-color:#bcdff5;
+}
+#tab-cobranza .billing-kpi.accent strong{color:#0b69d1}
+#tab-cobranza .billing-kpi.danger{
+  background:linear-gradient(145deg,#fff,#fff8f8);
+  border-color:#edd5d8;
+}
+#tab-cobranza .billing-kpi.danger strong{color:#be2631}
+
+/* Gráficos */
+#tab-cobranza .billing-main-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.8fr) minmax(360px,1fr) minmax(340px,.92fr);
+  gap:14px;
+  align-items:stretch;
+}
+#tab-cobranza .billing-main-grid .panel,
+#tab-cobranza .billing-table-panel{
+  min-width:0;
+  padding:18px;
+  border-radius:16px;
+  border:1px solid #d4e1e9;
+  background:#fff;
+  box-shadow:0 7px 22px rgba(18,54,78,.055);
+}
+#tab-cobranza .panel-title{
+  margin-bottom:12px;
+}
+#tab-cobranza .panel-title h3{
+  margin:0 0 4px;
+  color:#0b2f57;
+  font-size:18px;
+  line-height:1.15;
+  font-weight:850;
+  letter-spacing:-.015em;
+}
+#tab-cobranza .panel-title p{
+  color:#667d8d;
+  font-size:12px;
+  font-weight:600;
+}
+#tab-cobranza .billing-line-wrap,
+#tab-cobranza .billing-rank-wrap{
+  height:360px;
+  position:relative;
+}
+#tab-cobranza .billing-rate-panel{min-height:420px}
+#tab-cobranza .billing-rate-list{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  padding:5px 2px 0;
+}
+#tab-cobranza .billing-rate-row{
+  display:grid;
+  grid-template-columns:minmax(135px,1.15fr) minmax(120px,1fr) 58px;
+  gap:10px;
+  align-items:center;
+  min-height:18px;
+  font-size:11.5px;
+}
+#tab-cobranza .billing-rate-name{
+  color:#183c55;
+  font-weight:750;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#tab-cobranza .billing-rate-track{
+  height:10px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#e6edf2;
+}
+#tab-cobranza .billing-rate-fill{
+  display:block;
+  height:100%;
+  border-radius:999px;
+}
+#tab-cobranza .billing-rate-fill.good{background:linear-gradient(90deg,#18a96a,#27c17a)}
+#tab-cobranza .billing-rate-fill.mid{background:linear-gradient(90deg,#8bcf47,#b5dc55)}
+#tab-cobranza .billing-rate-fill.warn{background:linear-gradient(90deg,#f3b31f,#ffc239)}
+#tab-cobranza .billing-rate-fill.bad{background:linear-gradient(90deg,#e84b55,#f26b72)}
+#tab-cobranza .billing-rate-row strong{
+  color:#17384f;
+  text-align:right;
+  font-size:11.5px;
+  font-weight:850;
+}
+
+/* Bloque inferior */
+#tab-cobranza .billing-bottom-grid{
+  display:grid;
+  grid-template-columns:300px minmax(0,1fr);
+  gap:14px;
+  align-items:stretch;
+}
+#tab-cobranza .billing-alerts{
+  display:grid;
+  grid-template-rows:1fr 1fr;
+  gap:14px;
+}
+#tab-cobranza .billing-alert-card{
+  position:relative;
+  min-height:150px;
+  padding:22px 20px 20px 72px;
+  border-radius:16px;
+  border:1px solid #d3e3ed;
+  box-shadow:0 7px 22px rgba(18,54,78,.05);
+}
+#tab-cobranza .billing-alert-card:before{
+  position:absolute;
+  left:20px;
+  top:22px;
+  font-size:30px;
+  font-weight:900;
+}
+#tab-cobranza .billing-alert-card.info{
+  background:linear-gradient(145deg,#eef9ff,#e0f3ff);
+  border-color:#c3e5f7;
+}
+#tab-cobranza .billing-alert-card.info:before{content:"↗";color:#0b5f9b}
+#tab-cobranza .billing-alert-card.danger{
+  background:linear-gradient(145deg,#fff6f6,#ffebed);
+  border-color:#f2cfd3;
+}
+#tab-cobranza .billing-alert-card.danger:before{content:"!";color:#c3222e}
+#tab-cobranza .billing-alert-card span{
+  display:block;
+  margin-bottom:7px;
+  color:#31536d;
+  font-size:12px;
+  font-weight:850;
+  text-transform:uppercase;
+}
+#tab-cobranza .billing-alert-card strong{
+  display:block;
+  margin-bottom:9px;
+  color:#0b2f57;
+  font-size:27px;
+  line-height:1;
+  font-weight:900;
+}
+#tab-cobranza .billing-alert-card.danger strong{color:#a51e2a}
+#tab-cobranza .billing-alert-card small{
+  color:#526d80;
+  font-size:12px;
+  line-height:1.45;
+  font-weight:600;
+}
+
+/* Tabla ejecutiva */
+#tab-cobranza .billing-table-panel{
+  padding:0;
+  overflow:hidden;
+}
+#tab-cobranza .billing-table-panel>.panel-title{
+  padding:18px 18px 0;
+}
+#tab-cobranza .billing-table-panel .table-scroll{
+  max-height:330px;
+  overflow:auto;
+  border:0;
+  border-top:1px solid #e3ebf0;
+  border-radius:0;
+}
+#tab-cobranza .billing-table{
+  min-width:1080px;
+}
+#tab-cobranza .billing-table th{
+  top:0;
+  z-index:3;
+  padding:11px 14px;
+  background:#edf3f7;
+  color:#34536a;
+  font-size:10px;
+  font-weight:850;
+  letter-spacing:.03em;
+}
+#tab-cobranza .billing-table td{
+  padding:10px 14px;
+  border-top:1px solid #e8eef2;
+  color:#18384e;
+  font-size:12px;
+}
+#tab-cobranza .billing-table tbody tr:nth-child(even){background:#fbfdfe}
+#tab-cobranza .billing-table tbody tr:hover{background:#f0f8fc}
+#tab-cobranza .billing-table tfoot td{
+  position:sticky;
+  bottom:0;
+  z-index:2;
+  background:#dff1fb;
+  color:#0b2f57;
+  border-top:2px solid #b9dce9;
+  font-weight:850;
+}
+#tab-cobranza .billing-pct-pill{
+  display:inline-block;
+  min-width:56px;
+  padding:4px 8px;
+  border-radius:999px;
+  text-align:center;
+  font-weight:850;
+}
+#tab-cobranza .billing-pct-pill.good{background:#e4f7ed;color:#087b43}
+#tab-cobranza .billing-pct-pill.mid{background:#eef8df;color:#5b7e15}
+#tab-cobranza .billing-pct-pill.warn{background:#fff4d6;color:#996300}
+#tab-cobranza .billing-pct-pill.bad{background:#ffe5e8;color:#b1202d}
+
+@media(max-width:1500px){
+  #tab-cobranza{padding:22px 20px 30px}
+  #tab-cobranza .billing-kpi{padding-left:68px}
+  #tab-cobranza .billing-kpi:before{left:16px}
+  #tab-cobranza .billing-main-grid{grid-template-columns:1.55fr .95fr .9fr}
+  #tab-cobranza .billing-rate-row{grid-template-columns:minmax(110px,1fr) minmax(90px,.9fr) 52px}
+}
+@media(max-width:1250px){
+  #tab-cobranza .billing-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #tab-cobranza .billing-main-grid{grid-template-columns:1.4fr 1fr}
+  #tab-cobranza .billing-rate-panel{grid-column:1/-1}
+  #tab-cobranza .billing-bottom-grid{grid-template-columns:260px minmax(0,1fr)}
+}
+@media(max-width:900px){
+  #tab-cobranza .billing-heading{align-items:flex-start;flex-direction:column}
+  #tab-cobranza .billing-actions{justify-content:flex-start}
+  #tab-cobranza .billing-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #tab-cobranza .billing-main-grid,
+  #tab-cobranza .billing-bottom-grid{grid-template-columns:1fr}
+  #tab-cobranza .billing-alerts{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}
+  #tab-cobranza .billing-table-panel .table-scroll{max-height:420px}
+}
+@media(max-width:620px){
+  #tab-cobranza{padding:16px 12px 24px}
+  #tab-cobranza .billing-heading>div:first-child{padding-left:0}
+  #tab-cobranza .billing-heading>div:first-child:before{display:none}
+  #tab-cobranza .billing-heading h2{font-size:27px}
+  #tab-cobranza .billing-kpis{grid-template-columns:1fr}
+  #tab-cobranza .billing-alerts{grid-template-columns:1fr}
+  #tab-cobranza .billing-line-wrap,
+  #tab-cobranza .billing-rank-wrap{height:300px}
+}
