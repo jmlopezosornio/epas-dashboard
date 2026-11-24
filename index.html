@@ -26,7 +26,7 @@ body{background:#f4f8fb!important;color:#122b40!important}
 @media(max-width:1200px){.topbar-inner{grid-template-columns:330px 1fr auto!important;padding:0 20px!important}.tab-button{padding:0 16px!important}.brand-logo-real{width:245px;max-height:48px}}
 @media(max-width:900px){.topbar-inner{grid-template-columns:1fr!important;padding:12px 16px!important;gap:8px!important}.brand-shell{height:auto}.brand-logo-real{width:230px;max-height:46px}.tabbar{height:auto!important;overflow:auto!important}.tab-button{height:48px!important;white-space:nowrap}.topbar-user{display:none!important}.container{padding:14px!important}}
 </style>
-  <link rel="stylesheet" href="billing-annual.css?v=20261124-4" data-billing-annual-direct="1">\n</head>
+  <link rel="stylesheet" href="billing-annual.css?v=20261124-5" data-billing-annual-direct="1">\n</head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
@@ -58,12 +58,80 @@ body{background:#f4f8fb!important;color:#122b40!important}
 
   <main class="container">
     <section id="tab-cobranza" class="tab-content active">
-      <div class="section-heading"><div><div class="section-kicker">Gestión comercial</div><h2>Tablero de Cobranza</h2><p id="periodTitle">Período —</p></div><div class="file-actions"><button id="reloadDefault" class="button secondary">Actualizar datos</button></div></div>
-      <section class="status-card"><div><span class="status-dot"></span><strong id="fileStatus">Cargando archivo base…</strong></div><span id="lastUpdate">—</span></section>
-      <section class="filters panel"><div class="filter-group"><label for="cityFilter">Localidad</label><select id="cityFilter"><option value="ALL">Todas</option></select></div><div class="filter-group"><label for="channelFilter">Agente de cobro</label><select id="channelFilter"><option value="ALL">Todos</option></select></div><div class="filter-group"><label>Período detectado</label><div class="filter-readonly" id="periodFilter">—</div></div></section>
-      <section class="kpi-grid"><article class="kpi-card"><span>Cobranza total</span><strong id="kpiCollected">$ 0</strong><small>Según filtros aplicados</small></article><article class="kpi-card"><span>Principal agente</span><strong id="kpiTopChannel">—</strong><small id="kpiTopChannelShare">—</small></article><article class="kpi-card"><span>Mayor recaudación</span><strong id="kpiTopCity">—</strong><small id="kpiTopCityAmount">—</small></article><article class="kpi-card"><span>Localidades</span><strong id="kpiCities">0</strong><small>Con cobranza mayor a cero</small></article></section>
-      <section class="charts-grid"><article class="panel chart-panel wide"><div class="panel-title"><div><h3>Cobranza por localidad</h3></div></div><div class="chart-wrap"><canvas id="cityChart"></canvas></div></article><article class="panel chart-panel"><div class="panel-title"><div><h3>Principales agentes de cobro</h3></div></div><div class="chart-wrap"><canvas id="channelChart"></canvas></div></article><article class="panel chart-panel"><div class="panel-title"><div><h3>Distribución por localidad</h3></div></div><div class="chart-wrap"><canvas id="cityShareChart"></canvas></div></article></section>
-      <section class="panel table-panel"><div class="panel-title"><div><h3>Detalle de cobranza</h3></div><div class="table-total" id="tableTotal">Total: $ 0</div></div><div class="table-scroll"><table><thead><tr><th>Agente de cobro</th><th>Localidad</th><th class="numeric">Importe</th><th class="numeric">Participación</th></tr></thead><tbody id="detailBody"></tbody></table></div></section>
+      <div class="billing-annual">
+        <div class="section-heading billing-heading">
+          <div>
+            <div class="section-kicker">Gestión comercial</div>
+            <h2>Facturación y Cobranza · Resumen anual</h2>
+            <p id="billingPeriod">Acumulado anual</p>
+          </div>
+          <div class="file-actions billing-actions">
+            <button id="reloadBillingAnnual" class="button secondary">↻ Actualizar datos</button>
+            <button id="exportBillingPdf" class="button secondary">▣ Exportar PDF</button>
+            <button id="exportBillingCsv" class="button secondary">⇩ Exportar CSV</button>
+          </div>
+        </div>
+
+        <section class="status-card billing-status">
+          <div><span class="status-dot"></span><strong id="billingStatus">Cargando datos desde Google Sheets…</strong></div>
+          <span id="billingUpdated">—</span>
+        </section>
+
+        <section class="billing-kpis">
+          <article class="kpi-card billing-kpi"><span>Facturado acumulado</span><strong id="billKpiFact">$ 0</strong><small>Período con datos</small></article>
+          <article class="kpi-card billing-kpi"><span>Ingresado acumulado</span><strong id="billKpiCob">$ 0</strong><small>Cobranza registrada</small></article>
+          <article class="kpi-card billing-kpi accent"><span>Índice de cobranza</span><strong id="billKpiPct">0,0 %</strong><small>Ingresado / Facturado</small></article>
+          <article class="kpi-card billing-kpi danger"><span>Diferencia facturado - ingresado</span><strong id="billKpiDiff">$ 0</strong><small>Brecha acumulada</small></article>
+          <article class="kpi-card billing-kpi"><span id="billFocusCityName">Neuquén</span><strong id="billFocusCityShare">0,0 %</strong><small>de la facturación total</small></article>
+        </section>
+
+        <section class="billing-main-grid">
+          <article class="panel billing-line-panel">
+            <div class="panel-title"><div><h3>Evolución mensual · Facturado vs. Ingresado</h3><p>En miles de millones de $</p></div></div>
+            <div class="billing-line-wrap"><canvas id="billingMonthlyChart"></canvas></div>
+          </article>
+          <article class="panel billing-rank-panel">
+            <div class="panel-title"><div><h3>Ranking por facturación (acumulado)</h3><p>Principales localidades / segmentos</p></div></div>
+            <div class="billing-rank-wrap"><canvas id="billingRankChart"></canvas></div>
+          </article>
+          <article class="panel billing-rate-panel">
+            <div class="panel-title"><div><h3>Índice de cobranza por localidad</h3><p>Ingresado sobre facturado</p></div></div>
+            <div id="billingRateList" class="billing-rate-list"></div>
+          </article>
+        </section>
+
+        <section class="billing-bottom-grid">
+          <div class="billing-alerts">
+            <article class="billing-alert-card info">
+              <span>Mayor brecha nominal</span>
+              <strong id="billingGapCity">—</strong>
+              <small id="billingGapDetail">—</small>
+            </article>
+            <article class="billing-alert-card danger">
+              <span>Menor índice de cobranza</span>
+              <strong id="billingLowCity">—</strong>
+              <small id="billingLowDetail">—</small>
+            </article>
+          </div>
+          <article class="panel billing-table-panel">
+            <div class="panel-title"><div><h3>Detalle acumulado por localidad</h3><p>Facturación, ingresos y eficiencia de cobranza</p></div></div>
+            <div class="table-scroll">
+              <table class="billing-table">
+                <thead><tr>
+                  <th>Localidad</th>
+                  <th class="numeric">Facturado acumulado</th>
+                  <th class="numeric">Ingresado acumulado</th>
+                  <th class="numeric">% Cobranza</th>
+                  <th class="numeric">Diferencia</th>
+                  <th class="numeric">Participación s/ facturación total</th>
+                </tr></thead>
+                <tbody id="billingDetailBody"></tbody>
+                <tfoot id="billingDetailFoot"></tfoot>
+              </table>
+            </div>
+          </article>
+        </section>
+      </div>
     </section>
 
     <section id="tab-obras" class="tab-content">
@@ -142,7 +210,8 @@ body{background:#f4f8fb!important;color:#122b40!important}
   </main>
 
   <footer>EPAS · Tablero de gestión</footer>
-  <script src="app.js?v=20261124-4"></script>\n  <script src="billing-annual.js?v=20261124-4" data-billing-annual-direct="1"></script>
+  <script src="app.js?v=20261124-5"></script>
+  <script src="billing-annual.js?v=20261124-5" data-billing-annual-direct="1"></script>
 
 <script>
 // EPAS v6: mapa provincial local, normalización de sistemas y etiquetas de gráficos.
