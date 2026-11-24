@@ -54,7 +54,7 @@
       document.head.appendChild(billingCss);
 
       var billingAnnual=document.createElement('script');
-      billingAnnual.src='billing-annual.js?v=20261124-1';
+      billingAnnual.src='billing-annual.js?v=20261124-2';
       billingAnnual.onerror=function(){console.error('No se pudo cargar billing-annual.js');};
       document.body.appendChild(billingAnnual);
 
