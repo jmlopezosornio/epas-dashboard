@@ -1,0 +1,36 @@
+
+#tab-cobranza{padding-bottom:28px}
+.billing-annual{display:flex;flex-direction:column;gap:16px}
+.billing-heading{align-items:flex-start}
+.billing-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.billing-status{margin-top:-4px}
+.billing-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+.billing-kpi{min-height:122px}
+.billing-kpi.accent strong{color:#0d6efd}
+.billing-kpi.danger strong{color:#b4232b}
+.billing-main-grid{display:grid;grid-template-columns:1.85fr 1.08fr 1fr;gap:14px;align-items:stretch}
+.billing-main-grid .panel{min-width:0}
+.billing-line-wrap,.billing-rank-wrap{height:310px}
+.billing-rate-panel{min-height:390px}
+.billing-rate-list{display:flex;flex-direction:column;gap:9px;padding:6px 4px 4px}
+.billing-rate-row{display:grid;grid-template-columns:minmax(120px,1.2fr) minmax(110px,1fr) 62px;align-items:center;gap:10px;font-size:13px}
+.billing-rate-name{font-weight:700;color:#27445a}
+.billing-rate-track{height:11px;background:#e7edf2;border-radius:999px;overflow:hidden}
+.billing-rate-fill{display:block;height:100%;border-radius:999px}
+.billing-rate-fill.good{background:#22b573}.billing-rate-fill.mid{background:#8bcf58}.billing-rate-fill.warn{background:#f5a623}.billing-rate-fill.bad{background:#e44b55}
+.billing-rate-row strong{text-align:right;color:#17384f}
+.billing-bottom-grid{display:grid;grid-template-columns:310px minmax(0,1fr);gap:14px;align-items:start}
+.billing-alerts{display:flex;flex-direction:column;gap:14px}
+.billing-alert-card{border-radius:16px;padding:18px 20px;border:1px solid #d7e4ed;background:#fff;box-shadow:0 8px 24px rgba(14,51,79,.06)}
+.billing-alert-card.info{background:#eaf6ff;border-color:#c8e6fb}.billing-alert-card.danger{background:#fff0f1;border-color:#f5cfd3}
+.billing-alert-card span{display:block;font-size:14px;font-weight:800;color:#31536d;margin-bottom:6px}
+.billing-alert-card strong{display:block;font-size:28px;line-height:1.05;color:#0d2b48;margin-bottom:8px}
+.billing-alert-card.danger strong{color:#a51e2a}
+.billing-alert-card small{font-size:12px;line-height:1.4;color:#60798b}
+.billing-table-panel{min-width:0}
+.billing-table tfoot td{background:#e8f4fb;font-weight:800;border-top:2px solid #c7dce9}
+.billing-pct-pill{display:inline-block;padding:3px 8px;border-radius:999px;font-weight:800}
+.billing-pct-pill.good{background:#e4f7ed;color:#087b43}.billing-pct-pill.mid{background:#eef8df;color:#5b7e15}.billing-pct-pill.warn{background:#fff4d6;color:#996300}.billing-pct-pill.bad{background:#ffe5e8;color:#b1202d}
+@media(max-width:1450px){.billing-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.billing-main-grid{grid-template-columns:1.5fr 1fr}.billing-rate-panel{grid-column:1/-1}}
+@media(max-width:1050px){.billing-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.billing-main-grid{grid-template-columns:1fr}.billing-bottom-grid{grid-template-columns:1fr}.billing-alerts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.billing-kpis{grid-template-columns:1fr}.billing-alerts{grid-template-columns:1fr}.billing-rate-row{grid-template-columns:1fr 1fr 52px}.billing-line-wrap,.billing-rank-wrap{height:280px}}
