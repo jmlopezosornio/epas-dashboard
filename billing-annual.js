@@ -184,60 +184,103 @@
 
     var monthlyCanvas = document.getElementById('billingMonthlyChart');
     if(monthlyCanvas){
+      var monthlyFact = state.months.map(function(x){ return x.facturado/1e6; });
+      var monthlyCob = state.months.map(function(x){ return x.cobrado/1e6; });
+      var monthlyMax = Math.max.apply(null,monthlyFact.concat(monthlyCob));
+      var yMax = Math.ceil((monthlyMax+250)/500)*500;
+      var yMin = Math.max(0,Math.floor((Math.min.apply(null,monthlyFact.concat(monthlyCob))-500)/500)*500);
+
       state.charts.monthly = new Chart(monthlyCanvas,{
         type:'line',
         data:{
-          labels:state.months.map(function(x){ return x.month; }),
+          labels:state.months.map(function(x){ return x.month.slice(0,3); }),
           datasets:[
             {
               label:'Facturado',
-              data:state.months.map(function(x){ return x.facturado/1e9; }),
-              borderColor:'#1769aa',
-              backgroundColor:'#1769aa',
+              data:monthlyFact,
+              borderColor:'#0b4f8a',
+              backgroundColor:'rgba(11,79,138,0)',
               borderWidth:3,
-              tension:0.18,
-              pointRadius:4,
-              pointHoverRadius:6,
+              tension:0.16,
+              pointRadius:5,
+              pointHoverRadius:7,
+              pointBackgroundColor:'#ffffff',
+              pointBorderColor:'#0b4f8a',
+              pointBorderWidth:3,
               fill:false
             },
             {
               label:'Ingresado',
-              data:state.months.map(function(x){ return x.cobrado/1e9; }),
-              borderColor:'#2bb673',
-              backgroundColor:'#2bb673',
+              data:monthlyCob,
+              borderColor:'#48a92e',
+              backgroundColor:'rgba(72,169,46,.13)',
               borderWidth:3,
-              tension:0.18,
-              pointRadius:4,
-              pointHoverRadius:6,
-              fill:false
+              tension:0.16,
+              pointRadius:5,
+              pointHoverRadius:7,
+              pointBackgroundColor:'#ffffff',
+              pointBorderColor:'#48a92e',
+              pointBorderWidth:3,
+              fill:true
             }
           ]
         },
         options:{
           responsive:true,
           maintainAspectRatio:false,
+          interaction:{mode:'index',intersect:false},
           plugins:{
-            legend:{position:'top',align:'end',labels:{usePointStyle:true,boxWidth:10,font:{size:12,weight:'700'}}},
+            legend:{
+              position:'top',
+              align:'end',
+              labels:{
+                usePointStyle:true,
+                pointStyle:'circle',
+                boxWidth:9,
+                boxHeight:9,
+                padding:18,
+                color:'#17384f',
+                font:{size:12,weight:'700'}
+              }
+            },
             tooltip:{
+              backgroundColor:'rgba(9,38,62,.94)',
+              padding:11,
               callbacks:{
                 label:function(ctx){
                   return ctx.dataset.label + ': $ ' +
-                    Number(ctx.raw).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}) +
-                    ' mil M';
+                    Number(ctx.raw).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1}) +
+                    ' M';
                 }
               }
             }
           },
           scales:{
             y:{
+              min:yMin,
+              max:yMax,
+              grid:{color:'#d9e3ea',lineWidth:1},
+              border:{color:'#728696'},
+              title:{
+                display:true,
+                text:'Millones de $',
+                color:'#17384f',
+                font:{size:12,weight:'700'}
+              },
               ticks:{
+                stepSize:500,
+                color:'#27465d',
                 font:{size:11,weight:'600'},
                 callback:function(v){
-                  return '$ ' + Number(v).toLocaleString('es-AR',{maximumFractionDigits:1}) + ' mil M';
+                  return Number(v).toLocaleString('es-AR',{maximumFractionDigits:0});
                 }
               }
             },
-            x:{grid:{display:false},ticks:{font:{size:11,weight:'600'}}}
+            x:{
+              grid:{display:false},
+              border:{color:'#728696'},
+              ticks:{color:'#27465d',font:{size:11,weight:'700'}}
+            }
           }
         }
       });
@@ -336,9 +379,6 @@
         state.months[state.months.length-1].month.toLowerCase() + ' 2026'
       : 'Sin período';
 
-    if(state.pending.length){
-      period += ' · ' + state.pending.map(function(x){ return x.toLowerCase(); }).join(' y ') + ' pendientes';
-    }
     document.getElementById('billingPeriod').textContent = period;
 
     var rateRows = state.cities.slice().sort(function(a,b){ return b.pct-a.pct; });
@@ -411,16 +451,7 @@
 
       render();
 
-      if(status){
-        status.textContent = 'Google Sheets conectado · ' +
-          state.months.length + ' meses con datos · ' +
-          state.cities.length + ' localidades/segmentos';
-      }
-
-      var updated = document.getElementById('billingUpdated');
-      if(updated){
-        updated.textContent = 'Actualizado ' + new Date().toLocaleString('es-AR');
-      }
+      if(status) status.textContent = '';
     }).catch(function(err){
       console.error('Facturación:',err);
       if(status) status.textContent = 'Error al leer Facturación: ' + err.message;
