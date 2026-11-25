@@ -528,3 +528,36 @@
   #tab-cobranza .billing-main-grid{grid-template-columns:1fr}
   #tab-cobranza .billing-alerts{grid-template-columns:1fr}
 }
+
+
+/* Icono de ubicación Neuquén */
+#tab-cobranza .billing-kpi-location:before{
+  display:none!important;
+  content:none!important;
+}
+#tab-cobranza .billing-kpi-location{
+  position:relative;
+  padding-left:82px;
+}
+#tab-cobranza .billing-kpi-icon-location{
+  position:absolute;
+  left:20px;
+  top:22px;
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:#eaf8fa;
+  border:1px solid #cfecef;
+  color:#1186a3;
+}
+#tab-cobranza .billing-kpi-icon-location svg{
+  width:30px;
+  height:30px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:4;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
