@@ -475,3 +475,56 @@
 @media(max-width:800px){
   #tab-cobranza .billing-alerts-row{grid-template-columns:1fr}
 }
+
+
+/* Corrección visual v14 · volver al diseño original */
+#tab-cobranza .billing-main-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.75fr) minmax(320px,1fr) minmax(300px,.92fr);
+  gap:14px;
+  align-items:stretch;
+}
+#tab-cobranza .billing-line-wrap{height:320px}
+#tab-cobranza .billing-rank-wrap{height:320px}
+#tab-cobranza .billing-rate-panel{min-height:360px}
+#tab-cobranza .billing-bottom-grid{
+  display:grid;
+  grid-template-columns:300px minmax(0,1fr);
+  gap:14px;
+  align-items:stretch;
+}
+#tab-cobranza .billing-alerts{
+  display:grid;
+  grid-template-rows:1fr 1fr;
+  gap:14px;
+}
+#tab-cobranza .billing-alert-card{
+  min-height:132px;
+}
+#tab-cobranza .billing-table-panel .table-scroll{
+  max-height:292px;
+}
+#tab-cobranza .billing-table{
+  min-width:900px;
+}
+#tab-cobranza .billing-rank-wide,
+#tab-cobranza .billing-alerts-row,
+#tab-cobranza .billing-bottom-table-only{
+  all:unset;
+}
+#tab-cobranza .billing-rank-wide{display:block}
+@media(max-width:1400px){
+  #tab-cobranza .billing-main-grid{
+    grid-template-columns:minmax(0,1.6fr) minmax(300px,.95fr) minmax(280px,.9fr);
+  }
+}
+@media(max-width:1100px){
+  #tab-cobranza .billing-main-grid{grid-template-columns:1fr 1fr}
+  #tab-cobranza .billing-rate-panel{grid-column:1/-1}
+  #tab-cobranza .billing-bottom-grid{grid-template-columns:1fr}
+  #tab-cobranza .billing-alerts{grid-template-columns:repeat(2,1fr);grid-template-rows:auto}
+}
+@media(max-width:700px){
+  #tab-cobranza .billing-main-grid{grid-template-columns:1fr}
+  #tab-cobranza .billing-alerts{grid-template-columns:1fr}
+}
