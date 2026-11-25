@@ -399,7 +399,6 @@
         '<td class="numeric">' + moneyM(c.cobrado) + '</td>' +
         '<td class="numeric"><span class="billing-pct-pill ' + rateClass(c.pct) + '">' + pct(c.pct) + '</span></td>' +
         '<td class="numeric">' + moneyM(c.diferencia) + '</td>' +
-        '<td class="numeric">' + pct(c.participacion) + '</td>' +
         '</tr>';
     }).join('');
 
@@ -410,7 +409,6 @@
       '<td class="numeric"><strong>' + moneyM(t.cobrado) + '</strong></td>' +
       '<td class="numeric"><strong>' + pct(ratio) + '</strong></td>' +
       '<td class="numeric"><strong>' + moneyM(t.facturado-t.cobrado) + '</strong></td>' +
-      '<td class="numeric"><strong>100,0 %</strong></td>' +
       '</tr>';
 
     renderCharts();
