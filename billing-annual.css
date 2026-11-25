@@ -561,3 +561,33 @@
   stroke-linecap:round;
   stroke-linejoin:round;
 }
+
+
+/* Icono de tendencia para Mayor brecha nominal */
+#tab-cobranza .billing-alert-gap:before{
+  display:none!important;
+  content:none!important;
+}
+#tab-cobranza .billing-alert-gap{
+  position:relative;
+  padding-left:76px;
+}
+#tab-cobranza .billing-alert-icon-trend{
+  position:absolute;
+  left:22px;
+  top:24px;
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  color:#0b4f8a;
+}
+#tab-cobranza .billing-alert-icon-trend svg{
+  width:34px;
+  height:34px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:5;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
