@@ -388,3 +388,51 @@
   #tab-cobranza .billing-line-wrap,
   #tab-cobranza .billing-rank-wrap{height:300px}
 }
+
+
+/* Ajustes de presentación solicitados · v12 */
+#tab-cobranza .billing-heading{
+  justify-content:flex-start;
+}
+#tab-cobranza .billing-heading-main{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+#tab-cobranza .billing-heading>div:first-child{
+  padding-left:0;
+}
+#tab-cobranza .billing-heading>div:first-child:before{
+  display:none!important;
+  content:none!important;
+}
+#tab-cobranza .billing-title-icon{
+  flex:0 0 46px;
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  color:#0b4d83;
+}
+#tab-cobranza .billing-title-icon svg{
+  width:42px;
+  height:42px;
+  fill:currentColor;
+}
+#tab-cobranza .billing-actions,
+#tab-cobranza .billing-status{
+  display:none!important;
+}
+#tab-cobranza .billing-line-panel{
+  padding:16px 18px 14px;
+}
+#tab-cobranza .billing-line-panel .panel-title{
+  margin-bottom:2px;
+}
+#tab-cobranza .billing-line-wrap{
+  height:390px;
+}
+@media(max-width:900px){
+  #tab-cobranza .billing-heading-main{align-items:flex-start}
+  #tab-cobranza .billing-title-icon{margin-top:1px}
+}
