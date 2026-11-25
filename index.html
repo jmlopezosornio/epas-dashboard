@@ -79,7 +79,23 @@ body{background:#f4f8fb!important;color:#122b40!important}
           <article class="kpi-card billing-kpi"><span>Facturado acumulado</span><strong id="billKpiFact">$ 0</strong><small>Período con datos</small></article>
           <article class="kpi-card billing-kpi"><span>Ingresado acumulado</span><strong id="billKpiCob">$ 0</strong><small>Cobranza registrada</small></article>
           <article class="kpi-card billing-kpi accent"><span>Índice de cobranza</span><strong id="billKpiPct">0,0 %</strong><small>Ingresado / Facturado</small></article>
-          <article class="kpi-card billing-kpi danger"><span>Diferencia facturado - ingresado</span><strong id="billKpiDiff">$ 0</strong><small>Brecha acumulada</small></article>
+          <article class="kpi-card billing-kpi danger billing-kpi-gap">
+  <span class="billing-kpi-icon-gap" aria-hidden="true">
+    <svg viewBox="0 0 64 64">
+      <path d="M10 52h44"></path>
+      <path d="M15 52V20h14v32"></path>
+      <path d="M37 52V31h14v21"></path>
+      <path d="M33 20h12"></path>
+      <path d="M39 22v7"></path>
+      <path d="M36 25l3-3 3 3"></path>
+      <path d="M39 31v7"></path>
+      <path d="M36 35l3 3 3-3"></path>
+    </svg>
+  </span>
+  <span>Diferencia facturado - ingresado</span>
+  <strong id="billKpiDiff">$ 0</strong>
+  <small>Brecha acumulada</small>
+</article>
           <article class="kpi-card billing-kpi billing-kpi-location">
   <span class="billing-kpi-icon-location" aria-hidden="true">
     <svg viewBox="0 0 64 64">
