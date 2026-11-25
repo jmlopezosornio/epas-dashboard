@@ -88,29 +88,31 @@ body{background:#f4f8fb!important;color:#122b40!important}
             <div class="panel-title"><div><h3>Evolución mensual · Facturado vs. Ingresado</h3></div></div>
             <div class="billing-line-wrap"><canvas id="billingMonthlyChart"></canvas></div>
           </article>
-          <article class="panel billing-rank-panel">
-            <div class="panel-title"><div><h3>Ranking por facturación (acumulado)</h3><p>Principales localidades / segmentos</p></div></div>
-            <div class="billing-rank-wrap"><canvas id="billingRankChart"></canvas></div>
-          </article>
           <article class="panel billing-rate-panel">
             <div class="panel-title"><div><h3>Índice de cobranza por localidad</h3><p>Ingresado sobre facturado</p></div></div>
             <div id="billingRateList" class="billing-rate-list"></div>
           </article>
         </section>
 
-        <section class="billing-bottom-grid">
-          <div class="billing-alerts">
-            <article class="billing-alert-card info">
-              <span>Mayor brecha nominal</span>
-              <strong id="billingGapCity">—</strong>
-              <small id="billingGapDetail">—</small>
-            </article>
-            <article class="billing-alert-card danger">
-              <span>Menor índice de cobranza</span>
-              <strong id="billingLowCity">—</strong>
-              <small id="billingLowDetail">—</small>
-            </article>
-          </div>
+        <section class="billing-alerts billing-alerts-row">
+          <article class="billing-alert-card info">
+            <span>Mayor brecha nominal</span>
+            <strong id="billingGapCity">—</strong>
+            <small id="billingGapDetail">—</small>
+          </article>
+          <article class="billing-alert-card danger">
+            <span>Menor índice de cobranza</span>
+            <strong id="billingLowCity">—</strong>
+            <small id="billingLowDetail">—</small>
+          </article>
+        </section>
+
+        <article class="panel billing-rank-panel billing-rank-wide">
+          <div class="panel-title"><div><h3>Ranking por facturación (acumulado)</h3><p>Principales localidades / segmentos</p></div></div>
+          <div class="billing-rank-wrap"><canvas id="billingRankChart"></canvas></div>
+        </article>
+
+        <section class="billing-bottom-grid billing-bottom-table-only">
           <article class="panel billing-table-panel">
             <div class="panel-title"><div><h3>Detalle acumulado por localidad</h3><p>Facturación, ingresos y eficiencia de cobranza</p></div></div>
             <div class="table-scroll">
@@ -121,7 +123,6 @@ body{background:#f4f8fb!important;color:#122b40!important}
                   <th class="numeric">Ingresado acumulado</th>
                   <th class="numeric">% Cobranza</th>
                   <th class="numeric">Diferencia</th>
-                  <th class="numeric">Participación s/ facturación total</th>
                 </tr></thead>
                 <tbody id="billingDetailBody"></tbody>
                 <tfoot id="billingDetailFoot"></tfoot>
