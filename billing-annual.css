@@ -436,3 +436,42 @@
   #tab-cobranza .billing-heading-main{align-items:flex-start}
   #tab-cobranza .billing-title-icon{margin-top:1px}
 }
+
+
+/* Redistribución de gráficos y tabla · v13 */
+#tab-cobranza .billing-main-grid{
+  grid-template-columns:minmax(0,2.2fr) minmax(330px,.9fr);
+}
+#tab-cobranza .billing-line-wrap{height:420px}
+#tab-cobranza .billing-rate-panel{min-height:458px}
+#tab-cobranza .billing-alerts-row{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+#tab-cobranza .billing-alerts-row .billing-alert-card{
+  min-height:132px;
+}
+#tab-cobranza .billing-rank-wide{
+  padding:18px;
+  border-radius:16px;
+  border:1px solid #d4e1e9;
+  background:#fff;
+  box-shadow:0 7px 22px rgba(18,54,78,.055);
+}
+#tab-cobranza .billing-rank-wide .billing-rank-wrap{
+  height:340px;
+}
+#tab-cobranza .billing-bottom-table-only{
+  grid-template-columns:1fr;
+}
+#tab-cobranza .billing-table{
+  min-width:920px;
+}
+@media(max-width:1250px){
+  #tab-cobranza .billing-main-grid{grid-template-columns:1fr}
+  #tab-cobranza .billing-rate-panel{min-height:auto}
+}
+@media(max-width:800px){
+  #tab-cobranza .billing-alerts-row{grid-template-columns:1fr}
+}
