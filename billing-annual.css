@@ -621,3 +621,36 @@
   stroke-linecap:round;
   stroke-linejoin:round;
 }
+
+
+/* Icono de brecha: dos barras desiguales */
+#tab-cobranza .billing-kpi-gap:before{
+  display:none!important;
+  content:none!important;
+}
+#tab-cobranza .billing-kpi-gap{
+  position:relative;
+  padding-left:82px;
+}
+#tab-cobranza .billing-kpi-icon-gap{
+  position:absolute;
+  left:20px;
+  top:22px;
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:#fff0f1;
+  border:1px solid #f2cfd3;
+  color:#c72632;
+}
+#tab-cobranza .billing-kpi-icon-gap svg{
+  width:32px;
+  height:32px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:3.6;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
