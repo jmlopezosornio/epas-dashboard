@@ -61,22 +61,19 @@ body{background:#f4f8fb!important;color:#122b40!important}
     <section id="tab-cobranza" class="tab-content active">
       <div class="billing-annual">
         <div class="section-heading billing-heading">
-          <div>
-            <div class="section-kicker">Gestión comercial</div>
-            <h2>Facturación y Cobranza · Resumen anual</h2>
-            <p id="billingPeriod">Acumulado anual</p>
-          </div>
-          <div class="file-actions billing-actions">
-            <button id="reloadBillingAnnual" class="button secondary">↻ Actualizar datos</button>
-            <button id="exportBillingPdf" class="button secondary">▣ Exportar PDF</button>
-            <button id="exportBillingCsv" class="button secondary">⇩ Exportar CSV</button>
+          <div class="billing-heading-main">
+            <span class="billing-title-icon" aria-hidden="true">
+              <svg viewBox="0 0 36 36">
+                <path d="M6 29V20h6v9H6Zm9 0V13h6v16h-6Zm9 0V7h6v22h-6Z"></path>
+              </svg>
+            </span>
+            <div>
+              <div class="section-kicker">Gestión comercial</div>
+              <h2>Facturación y Cobranza · Resumen anual</h2>
+              <p id="billingPeriod">Acumulado anual</p>
+            </div>
           </div>
         </div>
-
-        <section class="status-card billing-status">
-          <div><span class="status-dot"></span><strong id="billingStatus">Cargando datos desde Google Sheets…</strong></div>
-          <span id="billingUpdated">—</span>
-        </section>
 
         <section class="billing-kpis">
           <article class="kpi-card billing-kpi"><span>Facturado acumulado</span><strong id="billKpiFact">$ 0</strong><small>Período con datos</small></article>
@@ -88,7 +85,7 @@ body{background:#f4f8fb!important;color:#122b40!important}
 
         <section class="billing-main-grid">
           <article class="panel billing-line-panel">
-            <div class="panel-title"><div><h3>Evolución mensual · Facturado vs. Ingresado</h3><p>En miles de millones de $</p></div></div>
+            <div class="panel-title"><div><h3>Evolución mensual · Facturado vs. Ingresado</h3></div></div>
             <div class="billing-line-wrap"><canvas id="billingMonthlyChart"></canvas></div>
           </article>
           <article class="panel billing-rank-panel">
